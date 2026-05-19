@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Nova Market Intelligence Hub</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --purple:#6B21D6;--purple-mid:#8B3FE8;--purple-light:#A855F7;
+  --purple-bg:#F5F0FF;--purple-dim:rgba(107,33,214,0.08);--purple-border:rgba(107,33,214,0.2);
+  --gradient:linear-gradient(135deg,#6B21D6 0%,#A855F7 100%);
+  --bg:#F8F7FC;--white:#FFFFFF;
+  --t1:#1A1033;--t2:#4B4568;--t3:#8B85A8;--t4:#C4C0D8;
+  --b1:#E8E4F0;--b2:#D0C8E8;
+  --bull:#059669;--bull-bg:#ECFDF5;--bear:#DC2626;--bear-bg:#FEF2F2;--neu:#D97706;--neu-bg:#FFFBEB;
+  --r6:6px;--r10:10px;--r14:14px;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;line-height:1.5;}
+.w{max-width:1100px;margin:0 auto;padding:20px 24px;}
+.topbar{background:var(--gradient);border-radius:var(--r14);padding:14px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 16px rgba(107,33,214,0.25);}
+.nova-mark{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.01em;}
+.nova-mark em{color:rgba(255,255,255,0.75);font-style:normal;font-weight:400;}
+.tb-meta{font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.btn{font-size:11px;padding:6px 13px;border-radius:var(--r6);border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.12);color:#fff;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.btn:hover{background:rgba(255,255,255,0.22);}
+.btn.white{background:#fff;color:var(--purple);border-color:#fff;}
+.btn.white:hover{background:rgba(255,255,255,0.9);}
+.demo-pill{font-size:10px;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.25);}
+.live{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.7);}
+.ldot{width:7px;height:7px;border-radius:50%;background:#34D399;}
+.sl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;padding-left:2px;}
+.tw{background:var(--white);border:1px solid var(--b1);border-left:3px solid var(--purple);border-radius:var(--r14);padding:14px 18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(107,33,214,0.06);}
+.tw-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.tw-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--t1);}
+.tw-title i{color:var(--purple);}
+.tw-row{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--b1);}
+.tw-row:last-child{border-bottom:none;padding-bottom:0;}
+.tw-arr{color:var(--purple);font-weight:700;font-size:10px;margin-top:3px;flex-shrink:0;}
+.tw-tx{flex:1;font-size:12px;line-height:1.6;color:var(--t1);}
+.tw-bg{display:flex;gap:5px;flex-shrink:0;align-items:center;}
+.sb{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;}
+.s5{background:var(--purple-bg);color:var(--purple);}
+.s4{background:#EDE9FF;color:#5B21B6;}
+.s3{background:#F3E8FF;color:#7C3AED;}
+.stg{font-size:9px;color:var(--t3);padding:2px 7px;border:1px solid var(--b1);border-radius:4px;background:var(--bg);}
+.regen-btn{font-size:10px;padding:4px 11px;border-radius:var(--r6);border:1px solid var(--purple-border);background:var(--purple-dim);color:var(--purple);cursor:pointer;font-family:inherit;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.panel{background:var(--white);border:1px solid var(--b1);border-radius:var(--r14);padding:14px 16px;box-shadow:0 2px 6px rgba(107,33,214,0.05);}
+.ph{font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:7px;color:var(--t1);}
+.ph i{color:var(--purple);font-size:15px;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:5px 8px;text-align:left;border-bottom:1px solid var(--b1);}
+td{padding:6px 8px;border-bottom:1px solid var(--b1);font-size:11px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+.uu{color:var(--bull);font-weight:700;}.dd{color:var(--bear);font-weight:700;}.d{color:#F87171;}
+.imp{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.ic{background:var(--purple-bg);color:var(--purple);}
+.ih{background:#EDE9FF;color:#5B21B6;}
+.im{background:var(--neu-bg);color:#B45309;}
+.il{background:var(--bg);color:var(--t3);}
+.dh{color:var(--bear);font-weight:600;}.dm{color:var(--neu);font-weight:500;}.dl{color:var(--bull);font-weight:500;}
+.ch{color:var(--bull);font-weight:600;}.cm{color:var(--neu);}.cl{color:var(--bear);}
+.ascr{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;scrollbar-width:thin;scrollbar-color:var(--b2) transparent;}
+.ac{background:var(--white);border:1px solid var(--b1);border-radius:var(--r10);padding:12px 13px;min-width:152px;flex-shrink:0;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s,box-shadow .15s;}
+.ac::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:transparent;transition:background .15s;}
+.ac:hover::before,.ac.active::before{background:var(--gradient);}
+.ac:hover{border-color:var(--purple-border);box-shadow:0 2px 10px rgba(107,33,214,0.1);}
+.ac.active{border-color:var(--purple-border);}
+.ac-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+.ac-name{font-size:12px;font-weight:600;color:var(--t1);}
+.ac-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ac-spec{font-size:9px;color:var(--purple);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+.ac-date{font-size:10px;color:var(--t3);margin-bottom:6px;}
+.ac-sum{font-size:10px;color:var(--t2);line-height:1.5;margin-bottom:8px;}
+.ac-stars{font-size:10px;color:var(--purple);}
+.ac-stale{font-size:9px;color:var(--neu);font-weight:500;}
+.ct{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.cnum{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;color:var(--purple);margin-bottom:3px;}
+.cnum span{font-size:15px;color:var(--t3);font-weight:400;}
+.csub{font-size:11px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.cpill{font-size:10px;padding:2px 9px;border-radius:99px;background:var(--bull-bg);color:var(--bull);border:1px solid rgba(5,150,105,.2);font-weight:500;}
+.cbr{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.cbn{font-size:11px;color:var(--t2);width:90px;flex-shrink:0;}
+.cbt{flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--b1);}
+.cbf{height:100%;border-radius:3px;background:var(--gradient);}
+.cbv{font-size:11px;color:var(--t1);width:38px;text-align:right;font-family:'JetBrains Mono',monospace;font-weight:500;}
+.sm{color:var(--neu);}
+.cop{background:var(--white);border:1px solid var(--b1);border-radius:var(--r14);padding:16px 18px;margin-bottom:8px;box-shadow:0 2px 8px rgba(107,33,214,0.06);}
+.modes{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.mt{font-size:11px;padding:5px 12px;border-radius:var(--r6);border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;font-family:inherit;transition:all .12s;}
+.mt:hover{border-color:var(--purple-border);color:var(--purple);}
+.mt.active{background:var(--purple-dim);border-color:var(--purple-border);color:var(--purple);font-weight:500;}
+.qrow{display:flex;gap:8px;}
+.qi{flex:1;font-size:12px;padding:9px 13px;border-radius:var(--r6);border:1px solid var(--b2);background:var(--white);color:var(--t1);font-family:inherit;}
+.qi:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(107,33,214,0.1);}
+.qi::placeholder{color:var(--t4);}
+.qb{font-size:12px;padding:9px 20px;border-radius:var(--r6);background:var(--gradient);color:#fff;border:none;cursor:pointer;font-weight:600;font-family:inherit;box-shadow:0 2px 8px rgba(107,33,214,0.3);}
+.qb:hover{opacity:.9;}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
+.chip{font-size:11px;padding:4px 11px;border-radius:99px;border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;transition:all .12s;}
+.chip:hover{border-color:var(--purple-border);color:var(--purple);background:var(--purple-dim);}
+.qa{margin-top:12px;font-size:12px;line-height:1.7;background:var(--purple-dim);border-radius:var(--r10);padding:14px 16px;border-left:3px solid var(--purple);}
+.qsr{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid var(--purple-border);flex-wrap:wrap;}
+.qst{font-size:10px;color:var(--t3);padding:2px 7px;border:1px solid var(--b1);border-radius:4px;background:var(--white);}
+.qcf{font-size:10px;font-weight:700;margin-left:auto;}
+.ld{display:flex;align-items:center;gap:8px;color:var(--t3);font-size:12px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.spin{animation:sp .9s linear infinite;display:inline-block;}
+footer{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--b1);margin-top:4px;}
+footer .fl{font-size:11px;color:var(--t3);}
+footer .fl em{color:var(--purple);font-style:normal;}
+footer .fr{font-size:10px;color:var(--t4);}
+@media print{
+  .topbar{background:var(--purple)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .cop,.chips,.modes,.qrow,footer{display:none;}
+  .panel,.tw{break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+<div class="w">
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.5 9.5H22L16 14L18.5 21.5L12 17.5L5.5 21.5L8 14L2 9.5H9.5L12 2Z" fill="white" fill-opacity="0.9"/></svg>
+    <div>
+      <div class="nova-mark">Nova <em>Market Intelligence</em></div>
+      <div class="tb-meta">47 reports indexed &nbsp;·&nbsp; Last sync Jan 20, 2025</div>
+    </div>
+    <span class="demo-pill">Demo mode</span>
+  </div>
+  <div class="tb-right">
+    <div class="live"><span class="ldot"></span>Live</div>
+    <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Briefing</button>
+    <button class="btn white"><i class="ti ti-refresh"></i> Sync SharePoint</button>
+  </div>
+</div>
+
+<div class="tw">
+  <div class="tw-hd">
+    <div class="tw-title"><i class="ti ti-sparkles"></i> Executive Takeaways</div>
+    <button class="regen-btn">Regenerate</button>
+  </div>
+  <div id="twl"></div>
+</div>
+
+<div class="g2">
+  <div class="panel">
+    <div class="ph"><i class="ti ti-git-diff"></i> What Changed This Quarter</div>
+    <table><thead><tr><th>Topic</th><th>Change</th><th>Dir</th><th>Source</th><th>Nova</th></tr></thead><tbody id="wcb"></tbody></table>
+  </div>
+  <div class="panel">
+    <div class="ph"><i class="ti ti-chart-bubble"></i> Analyst Divergence</div>
+    <table><thead><tr><th>Topic</th><th>Divergence</th><th>Confidence</th></tr></thead><tbody id="divb"></tbody></table>
+  </div>
+</div>
+
+<div class="sl">Analyst sources — click to explore</div>
+<div class="ascr" id="acards"></div>
+
+<div class="ct">
+  <div class="panel">
+    <div class="ph"><i class="ti ti-calculator"></i> WFE Consensus 2025E</div>
+    <div class="cnum">$91.5<span>B</span></div>
+    <div class="csub">Weighted consensus &nbsp;·&nbsp; Range $87–95B <span class="cpill">HIGH Confidence</span></div>
+    <div id="cbars"></div>
+  </div>
+  <div class="panel">
+    <div class="ph"><i class="ti ti-timeline"></i> Analyst Sentiment Timeline</div>
+    <div style="position:relative;height:175px;"><canvas id="tlc"></canvas></div>
+  </div>
+</div>
+
+<div class="cop">
+  <div class="ph"><i class="ti ti-robot"></i> AI Research Copilot</div>
+  <div class="modes">
+    <button class="mt active" onclick="setMode('general',this)">General</button>
+    <button class="mt" onclick="setMode('nova',this)">Nova Impact</button>
+    <button class="mt" onclick="setMode('sales',this)">Sales Mode</button>
+    <button class="mt" onclick="setMode('risk',this)">Risk Analysis</button>
+    <button class="mt" onclick="setMode('delta',this)">What Changed</button>
+    <button class="mt" onclick="setMode('compare',this)">Compare Analysts</button>
+  </div>
+  <div class="qrow">
+    <input class="qi" id="qin" placeholder="Ask a question about the semiconductor market..." onkeydown="if(event.key==='Enter')ask()"/>
+    <button class="qb" onclick="ask()">Ask</button>
+  </div>
+  <div class="chips" id="qchips"></div>
+  <div id="qout" style="display:none;"></div>
+</div>
+
+<footer>
+  <div class="fl"><em>Nova</em> Market Intelligence v2.0</div>
+  <div class="fr">Internal use only &nbsp;·&nbsp; Marketing Research Hub</div>
+</footer>
+</div>
+
+<script>
+const TW=[
+  {t:'AI-driven advanced packaging demand accelerating — CoWoS and HBM metrology intensity significantly higher than traditional flows.',s:5,src:"Yole Jan'25"},
+  {t:'TSMC 2025 capex revised +8% by JPMorgan — direct increase in leading-edge metrology demand across 3nm and 2nm nodes.',s:5,src:"JPM Feb'25"},
+  {t:'Weighted WFE consensus $91.5B — strongest agreement on AI/Data Center; highest divergence on memory recovery timing.',s:4,src:'5 analysts'},
+  {t:'DRAM recovery delayed 2 quarters per Goldman Sachs — memory capex push-out affects Nova exposure in H1 2025.',s:3,src:"GS Jan'25"},
+  {t:'China WFE restrictions worsening — impacts ~15% of global equipment spend, increasing geopolitical risk.',s:3,src:"SEMI Nov'24"},
+];
+document.getElementById('twl').innerHTML=TW.map(t=>`<div class="tw-row"><span class="tw-arr">▶</span><span class="tw-tx">${t.t}</span><div class="tw-bg"><span class="sb ${t.s===5?'s5':t.s===4?'s4':'s3'}">Score ${t.s}</span><span class="stg">${t.src}</span></div></div>`).join('');
+
+const WC=[
+  {tp:'TSMC CapEx',ch:'+8% revision',dir:'↑↑',dc:'uu',src:"JPM Feb'25",imp:'CRITICAL',ic:'ic'},
+  {tp:'AI Packaging',ch:'Demand acceleration',dir:'↑↑',dc:'uu',src:"Yole Jan'25",imp:'CRITICAL',ic:'ic'},
+  {tp:'DRAM Recovery',ch:'Delayed 2 quarters',dir:'↓↓',dc:'dd',src:"GS Jan'25",imp:'MED',ic:'im'},
+  {tp:'China WFE',ch:'Restrictions worsening',dir:'↓↓',dc:'dd',src:"SEMI Nov'24",imp:'MED',ic:'im'},
+  {tp:'2nm Ramp',ch:'Later than consensus',dir:'↓',dc:'d',src:"TI Oct'24",imp:'LOW',ic:'il'},
+];
+document.getElementById('wcb').innerHTML=WC.map(r=>`<tr><td style="font-weight:500;">${r.tp}</td><td style="color:var(--t2);">${r.ch}</td><td class="${r.dc}">${r.dir}</td><td style="font-size:10px;color:var(--t3);">${r.src}</td><td><span class="imp ${r.ic}">${r.imp}</span></td></tr>`).join('');
+
+const DV=[
+  {t:'Memory recovery',d:'HIGH',dc:'dh',c:'LOW',cc:'cl'},{t:'China CapEx',d:'HIGH',dc:'dh',c:'LOW',cc:'cl'},
+  {t:'Automotive timing',d:'MED',dc:'dm',c:'MED',cc:'cm'},{t:'WFE total 2025',d:'LOW',dc:'dl',c:'HIGH',cc:'ch'},
+  {t:'AI / Data Centers',d:'LOW',dc:'dl',c:'HIGH',cc:'ch'},{t:'Adv. Packaging',d:'LOW',dc:'dl',c:'HIGH',cc:'ch'},
+];
+document.getElementById('divb').innerHTML=DV.map(r=>`<tr><td>${r.t}</td><td class="${r.dc}">${r.d}</td><td class="${r.cc}">${r.c}</td></tr>`).join('');
+
+const AN=[
+  {n:'JPMorgan',s:'bull',sp:'WFE & Financial',d:"Feb 2025",sm:'WFE recovery led by AI capex; TSMC +8% revision.',st:5,stale:false},
+  {n:'Goldman Sachs',s:'neutral',sp:'Macro & Risk',d:"Jan 2025",sm:'Cautious optimism; memory H2 recovery, H1 soft.',st:3,stale:false},
+  {n:'Yole',s:'bull',sp:'Packaging Expert',d:"Jan 2025",sm:'Advanced packaging boom; OSAT tight through 2026.',st:5,stale:false},
+  {n:'Gartner',s:'bull',sp:'Cycle & TAM',d:"Dec 2024",sm:'Semiconductor returns to growth; AI chips outperform.',st:4,stale:false},
+  {n:'SEMI',s:'neutral',sp:'Equipment Orders',d:"Nov 2024",sm:'WFE $87B; equipment orders improving steadily.',st:3,stale:true},
+  {n:'TechInsights',s:'neutral',sp:'Node Roadmaps',d:"Oct 2024",sm:'2nm ramp delayed; node scaling continues.',st:3,stale:true},
+  {n:'Evercore',s:'bull',sp:'SPE Positioning',d:"Sep 2024",sm:'Bullish SPE; Nova cited in process control.',st:4,stale:true},
+  {n:'Barclays',s:'bull',sp:'Supply Chain',d:"Aug 2024",sm:'Inventory digestion nearly complete.',st:3,stale:true},
+];
+const acEl=document.getElementById('acards');
+AN.forEach(a=>{
+  const sc=a.s==='bull'?'var(--bull)':a.s==='bear'?'var(--bear)':'var(--neu)';
+  const el=document.createElement('div');el.className='ac';
+  el.innerHTML=`<div class="ac-top"><span class="ac-name">${a.n}</span><span class="ac-dot" style="background:${sc}"></span></div><div class="ac-spec">${a.sp}</div><div class="ac-date">${a.d}${a.stale?' <span class="ac-stale">⚠ Stale</span>':''}</div><div class="ac-sum">${a.sm}</div><div class="ac-stars">${'★'.repeat(a.st)+'☆'.repeat(5-a.st)}</div>`;
+  el.onclick=()=>{document.querySelectorAll('.ac').forEach(x=>x.classList.remove('active'));el.classList.add('active');};
+  acEl.appendChild(el);
+});
+
+const CB=[{n:'JPMorgan',v:95,s:false},{n:'Yole',v:92,s:false},{n:'Goldman Sachs',v:90,s:false},{n:'Gartner',v:88,s:false},{n:'SEMI',v:87,s:true}];
+document.getElementById('cbars').innerHTML=CB.map(b=>{const p=(b.v-80)/15*100;return`<div class="cbr"><span class="cbn">${b.n}${b.s?' <span class="sm">⚠</span>':''}</span><div class="cbt"><div class="cbf" style="width:${p}%;opacity:${b.s?.45:1}"></div></div><span class="cbv">$${b.v}B</span></div>`;}).join('');
+
+new Chart(document.getElementById('tlc').getContext('2d'),{type:'line',data:{labels:["Q1'24","Q2'24","Q3'24","Q4'24","Q1'25"],datasets:[
+  {label:'JPMorgan',data:[2,2,2,3,3],borderColor:'#6B21D6',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#6B21D6',tension:.3},
+  {label:'Goldman Sachs',data:[2,1,2,2,2],borderColor:'#2D6BA0',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#2D6BA0',tension:.3},
+  {label:'Yole',data:[2,2,3,3,3],borderColor:'#A855F7',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#A855F7',tension:.3},
+  {label:'Gartner',data:[1,2,2,3,3],borderColor:'#059669',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#059669',tension:.3},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8B85A8',font:{size:10},boxWidth:8,padding:12}}},scales:{y:{min:0,max:4,ticks:{font:{size:10},color:'#8B85A8',callback:v=>['','Bear','Neutral','Bull',''][v]||''},grid:{color:'rgba(107,33,214,0.06)'},border:{display:false}},x:{ticks:{font:{size:10},color:'#8B85A8'},grid:{display:false},border:{display:false}}}}});
+
+const CHIPS={general:['WFE consensus 2025?','Biggest risks?','Most bullish analyst?'],nova:['Implications for Nova?','Packaging inspection demand?','Process control trends?'],sales:['Talking points for TSMC?','AI packaging narrative?','Position vs. KLA?'],risk:['Biggest downside risks?','China WFE risk?','Memory recovery uncertainty?'],delta:['What changed vs. last quarter?','Largest revisions?','New themes?'],compare:['JPM vs. Goldman on WFE?','Most bullish on packaging?','Biggest divergence?']};
+const ANS={general:`Based on 5 analyst reports, the weighted WFE consensus for 2025 is <strong>$91.5B</strong> — ~12% YoY growth. JPMorgan leads at $95B driven by AI capex acceleration; SEMI is most conservative at $87B. All analysts agree AI/Data Center is the primary growth driver. Memory recovery remains the key uncertainty.`,nova:`<strong>Top Nova implications from current analyst consensus:</strong><br><br>⭐ <strong>Score 5 — Critical:</strong> Advanced packaging inspection demand accelerating. Yole reports CoWoS and HBM driving significantly higher metrology intensity — direct uplift for Nova optical metrology tools.<br><br>■ <strong>Score 5 — Critical:</strong> TSMC capex revised up +8% (JPMorgan). More 3nm/2nm wafers = more metrology steps = direct Nova revenue opportunity.<br><br>■ <strong>Score 3 — Medium:</strong> DRAM recovery delay creates H1 2025 softness — monitor memory fab capex closely.`,sales:`<strong>3 talking points for a customer conversation:</strong><br><br><strong>1.</strong> "According to Yole's January 2025 report, advanced packaging demand is accelerating — CoWoS and HBM adoption creates significantly higher metrology requirements per wafer."<br><br><strong>2.</strong> "JPMorgan revised TSMC's 2025 capex upward by 8% in February — continued investment in leading-edge capacity, where precision metrology matters most."<br><br><strong>3.</strong> "Analyst consensus puts 2025 WFE at $91.5B — the recovery is real and driven by AI, the highest metrology-intensity segment in the market."`,risk:`<strong>Top risks by severity × Nova exposure:</strong><br><br>🔴 <strong>HIGH × High exposure:</strong> Memory recovery delayed 2 quarters (Goldman Sachs) — Nova memory fab exposure affected in H1 2025.<br><br>🔴 <strong>HIGH × Medium exposure:</strong> China WFE restrictions worsening (SEMI) — ~15% of global WFE at risk.<br><br>🟡 <strong>MEDIUM:</strong> 2nm ramp delay (TechInsights) — leading-edge metrology push-out ~1-2 quarters.`,delta:`<strong>Top changes since last quarter:</strong><br><br>↑↑ <strong>TSMC CapEx +8%</strong> — JPMorgan revised upward; AI accelerator demand exceeding expectations. [Nova: HIGH]<br><br>↑↑ <strong>AI Packaging — Demand acceleration</strong> — Yole upgraded outlook; CoWoS capacity tight through 2026. [Nova: CRITICAL]<br><br>↓↓ <strong>DRAM Recovery — Delayed 2Q</strong> — Goldman Sachs; inventory digestion slower than expected. [Nova: MEDIUM]`,compare:`<strong>JPMorgan vs. Goldman Sachs on WFE 2025:</strong><br><br>JPMorgan ($95B, Bullish): Sees AI capex as structural, multi-year. Strong conviction on TSMC/Samsung investment continuing regardless of macro.<br><br>Goldman Sachs ($90B, Neutral): More cautious on H1; memory recovery risk real. Agrees on AI direction but thinks magnitude overestimated.<br><br><strong>Divergence: $5B (5.4%) — MEDIUM signal.</strong> Disagreement is on timing, not direction. Both converge by 2026E.`};
+
+let mode='general';
+function setMode(m,btn){mode=m;document.querySelectorAll('.mt').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderChips();document.getElementById('qin').placeholder={general:'Ask about the semiconductor market...',nova:'Ask about implications for Nova...',sales:'Prepare for a customer conversation...',risk:'Ask about market risks...',delta:'Ask what changed since last quarter...',compare:'Compare analysts or topics...'}[m];document.getElementById('qout').style.display='none';}
+function renderChips(){document.getElementById('qchips').innerHTML=(CHIPS[mode]||[]).map(q=>`<span class="chip" onclick="document.getElementById('qin').value='${q}'">${q}</span>`).join('');}
+function ask(){const q=document.getElementById('qin').value.trim();if(!q)return;const out=document.getElementById('qout');out.style.display='block';out.innerHTML='<div class="qa"><div class="ld"><i class="ti ti-loader spin"></i> Searching across 47 indexed reports...</div></div>';setTimeout(()=>{const a=ANS[mode]||ANS.general;out.innerHTML=`<div class="qa"><div>${a}</div><div class="qsr"><span class="qst">JPM Feb'25</span><span class="qst">Yole Jan'25</span><span class="qst">GS Jan'25</span><span class="qst">Gartner Dec'24</span><span class="qcf ch">Confidence: HIGH</span></div></div>`;},1100);}
+renderChips();
+</script>
+</body>
+</html>
