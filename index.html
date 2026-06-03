@@ -3,266 +3,805 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence Hub</title>
+<title>Nova Market Intelligence</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --purple:#6B21D6;--purple-mid:#8B3FE8;--purple-light:#A855F7;
-  --purple-bg:#F5F0FF;--purple-dim:rgba(107,33,214,0.08);--purple-border:rgba(107,33,214,0.2);
-  --gradient:linear-gradient(135deg,#6B21D6 0%,#A855F7 100%);
-  --bg:#F8F7FC;--white:#FFFFFF;
-  --t1:#1A1033;--t2:#4B4568;--t3:#8B85A8;--t4:#C4C0D8;
+  --p:#6B21D6;--pl:#A855F7;--pbg:#F5F0FF;--pdim:rgba(107,33,214,0.08);--pb:rgba(107,33,214,0.2);
+  --grad:linear-gradient(135deg,#6B21D6 0%,#A855F7 100%);
+  --bg:#F8F7FC;--w:#fff;--t1:#1A1033;--t2:#4B4568;--t3:#8B85A8;--t4:#C4C0D8;
   --b1:#E8E4F0;--b2:#D0C8E8;
-  --bull:#059669;--bull-bg:#ECFDF5;--bear:#DC2626;--bear-bg:#FEF2F2;--neu:#D97706;--neu-bg:#FFFBEB;
+  --bull:#059669;--bullbg:#ECFDF5;--bear:#DC2626;--bearbg:#FEF2F2;--neu:#D97706;--neubg:#FFFBEB;
   --r6:6px;--r10:10px;--r14:14px;
+  --nova-navy:#0A1628;
 }
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;line-height:1.5;}
-.w{max-width:1100px;margin:0 auto;padding:20px 24px;}
-.topbar{background:var(--gradient);border-radius:var(--r14);padding:14px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 16px rgba(107,33,214,0.25);}
-.nova-mark{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.01em;}
-.nova-mark em{color:rgba(255,255,255,0.75);font-style:normal;font-weight:400;}
-.tb-meta{font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;}
-.tb-right{display:flex;align-items:center;gap:8px;}
-.btn{font-size:11px;padding:6px 13px;border-radius:var(--r6);border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.12);color:#fff;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:5px;}
-.btn:hover{background:rgba(255,255,255,0.22);}
-.btn.white{background:#fff;color:var(--purple);border-color:#fff;}
-.btn.white:hover{background:rgba(255,255,255,0.9);}
-.demo-pill{font-size:10px;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.25);}
-.live{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.7);}
-.ldot{width:7px;height:7px;border-radius:50%;background:#34D399;}
-.sl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;padding-left:2px;}
-.tw{background:var(--white);border:1px solid var(--b1);border-left:3px solid var(--purple);border-radius:var(--r14);padding:14px 18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(107,33,214,0.06);}
-.tw-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.tw-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--t1);}
-.tw-title i{color:var(--purple);}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;}
+.wrap{max-width:1120px;margin:0 auto;padding:16px 20px;}
+
+/* TOPBAR */
+.topbar{background:var(--grad);border-radius:var(--r14);padding:13px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 16px rgba(107,33,214,.25);}
+.brand{display:flex;align-items:center;gap:12px;}
+/* Nova logo SVG inline — matches the wordmark style */
+.nova-wordmark{height:28px;display:flex;align-items:center;}
+.brand-text{font-size:13px;color:rgba(255,255,255,0.75);margin-right:4px;font-weight:400;letter-spacing:0.02em;}
+.brand-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;}
+.tbr{display:flex;align-items:center;gap:8px;}
+.tbtn{font-size:11px;padding:6px 13px;border-radius:var(--r6);border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;transition:background .15s;}
+.tbtn:hover{background:rgba(255,255,255,.22);}
+.tbtn.w{background:#fff;color:var(--p);}
+.tbtn.w:hover{background:rgba(255,255,255,.9);}
+.sdot{width:7px;height:7px;border-radius:50%;background:#F59E0B;}
+.sdot.live{background:#34D399;}
+
+/* PANELS */
+.panel{background:var(--w);border:1px solid var(--b1);border-radius:var(--r14);padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(107,33,214,.04);}
+.panel.accent{border-left:3px solid var(--p);}
+.ph{font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.ph-l{display:flex;align-items:center;gap:7px;}
+.ph-l i{color:var(--p);font-size:15px;}
+
+/* AUTH */
+.auth-box{text-align:center;padding:48px 24px;}
+.auth-box h2{font-size:18px;font-weight:600;margin-bottom:8px;}
+.auth-box p{font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:24px;}
+.auth-btn{background:var(--grad);color:#fff;border:none;padding:12px 28px;border-radius:var(--r6);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(107,33,214,.3);}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
+.metric{background:var(--w);border:1px solid var(--b1);border-radius:var(--r10);padding:12px;text-align:center;}
+.mv{font-size:22px;font-weight:700;color:var(--p);}
+.ml{font-size:10px;color:var(--t3);margin-top:3px;}
+
+/* PARSE STATUS */
+.parse-status{background:var(--w);border:1px solid var(--b1);border-radius:var(--r10);padding:10px 14px;margin-bottom:12px;}
+.ps-title{font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.ps-title i{color:var(--p);}
+.ps-list{display:flex;flex-direction:column;gap:4px;}
+.ps-item{display:flex;align-items:center;gap:8px;font-size:11px;}
+
+/* PROGRESS */
+.pw{margin-bottom:10px;}
+.pl{font-size:11px;color:var(--t3);margin-bottom:3px;}
+.pt{height:3px;background:var(--b1);border-radius:2px;overflow:hidden;}
+.pb{height:100%;background:var(--grad);border-radius:2px;transition:width .4s;}
+
+/* CATEGORY TABS */
+.cat-tabs{display:flex;gap:8px;margin-bottom:12px;}
+.cat-tab{flex:1;padding:12px;border-radius:var(--r10);border:2px solid var(--b1);background:var(--w);cursor:pointer;text-align:center;transition:all .15s;}
+.cat-tab:hover{border-color:var(--pb);}
+.cat-tab.active{border-color:var(--p);background:var(--pdim);}
+.ct-icon{font-size:22px;color:var(--t3);margin-bottom:4px;}
+.cat-tab.active .ct-icon{color:var(--p);}
+.ct-name{font-size:12px;font-weight:600;color:var(--t2);}
+.cat-tab.active .ct-name{color:var(--p);}
+.ct-sub{font-size:10px;color:var(--t3);margin-top:2px;}
+.cat-panel{display:none;}
+.cat-panel.active{display:block;}
+
+/* CAT HEADER */
+.cat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.cat-title{font-size:14px;font-weight:600;}
+.cat-actions{display:flex;gap:6px;}
+.act-btn{font-size:11px;padding:5px 11px;border-radius:var(--r6);border:1px solid var(--b2);background:var(--w);color:var(--t2);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;}
+.act-btn:hover{background:var(--pdim);border-color:var(--pb);color:var(--p);}
+
+/* ANALYST TOGGLES */
+.atogs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.atog{font-size:10px;padding:3px 10px;border-radius:99px;border:1.5px solid;background:var(--bg);cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .12s;}
+.atog.off{opacity:.3;filter:grayscale(.9);}
+.atdot{width:7px;height:7px;border-radius:50%;}
+
+/* YEAR SELECTOR */
+.year-sel-wrap{margin-bottom:10px;}
+.year-sel-label{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;}
+.year-sel{display:flex;flex-wrap:wrap;gap:4px;}
+.yr-btn{font-size:10px;padding:3px 9px;border-radius:99px;border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;transition:all .12s;}
+.yr-btn:hover{border-color:var(--pb);color:var(--p);}
+.yr-btn.active{background:var(--grad);border-color:transparent;color:#fff;}
+
+/* CHART */
+.chart-wrap{position:relative;height:320px;margin-bottom:12px;}
+
+/* TABLE */
+.dt-wrap{overflow-x:auto;}
+table.dt{width:100%;border-collapse:collapse;font-size:11px;}
+table.dt th{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:5px 8px;text-align:left;border-bottom:1px solid var(--b1);white-space:nowrap;}
+table.dt td{padding:5px 8px;border-bottom:1px solid var(--b1);vertical-align:middle;}
+table.dt tr:last-child td{border-bottom:none;}
+table.dt tr:hover td{background:var(--bg);}
+.src-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;}
+
+/* PROCESS CONTROL */
+.pc-dropdown{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.pc-dropdown label{font-size:11px;color:var(--t2);font-weight:500;}
+.pc-dropdown select{font-size:12px;padding:6px 10px;border-radius:var(--r6);border:1px solid var(--b2);background:var(--w);color:var(--t1);cursor:pointer;font-family:inherit;}
+.pc-dropdown select:focus{outline:none;border-color:var(--p);}
+
+/* DIVIDER */
+.section-divider{display:flex;align-items:center;gap:12px;margin:20px 0 12px;}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--b1);}
+.section-divider span{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);}
+
+/* TAKEAWAYS */
 .tw-row{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--b1);}
-.tw-row:last-child{border-bottom:none;padding-bottom:0;}
-.tw-arr{color:var(--purple);font-weight:700;font-size:10px;margin-top:3px;flex-shrink:0;}
-.tw-tx{flex:1;font-size:12px;line-height:1.6;color:var(--t1);}
-.tw-bg{display:flex;gap:5px;flex-shrink:0;align-items:center;}
-.sb{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;}
-.s5{background:var(--purple-bg);color:var(--purple);}
+.tw-row:last-child{border-bottom:none;}
+.tw-arr{color:var(--p);font-size:10px;margin-top:3px;flex-shrink:0;font-weight:700;}
+.tw-txt{flex:1;font-size:12px;line-height:1.6;}
+.tw-tags{display:flex;gap:5px;flex-shrink:0;align-items:center;}
+.sbadge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;}
+.s5{background:var(--pbg);color:var(--p);}
 .s4{background:#EDE9FF;color:#5B21B6;}
 .s3{background:#F3E8FF;color:#7C3AED;}
-.stg{font-size:9px;color:var(--t3);padding:2px 7px;border:1px solid var(--b1);border-radius:4px;background:var(--bg);}
-.regen-btn{font-size:10px;padding:4px 11px;border-radius:var(--r6);border:1px solid var(--purple-border);background:var(--purple-dim);color:var(--purple);cursor:pointer;font-family:inherit;}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.panel{background:var(--white);border:1px solid var(--b1);border-radius:var(--r14);padding:14px 16px;box-shadow:0 2px 6px rgba(107,33,214,0.05);}
-.ph{font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:7px;color:var(--t1);}
-.ph i{color:var(--purple);font-size:15px;}
-table{width:100%;border-collapse:collapse;}
-th{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:5px 8px;text-align:left;border-bottom:1px solid var(--b1);}
-td{padding:6px 8px;border-bottom:1px solid var(--b1);font-size:11px;vertical-align:middle;}
-tr:last-child td{border-bottom:none;}
-.uu{color:var(--bull);font-weight:700;}.dd{color:var(--bear);font-weight:700;}.d{color:#F87171;}
-.imp{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;}
-.ic{background:var(--purple-bg);color:var(--purple);}
-.ih{background:#EDE9FF;color:#5B21B6;}
-.im{background:var(--neu-bg);color:#B45309;}
-.il{background:var(--bg);color:var(--t3);}
-.dh{color:var(--bear);font-weight:600;}.dm{color:var(--neu);font-weight:500;}.dl{color:var(--bull);font-weight:500;}
+.stag{font-size:9px;color:var(--t3);padding:2px 7px;border:1px solid var(--b1);border-radius:3px;}
+.stag-link{font-size:9px;padding:2px 7px;border:1px solid var(--pb);border-radius:3px;color:var(--p);text-decoration:none;background:var(--pdim);}
+.stag-link:hover{background:var(--pbg);}
+
+/* MISC */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+table.mt{width:100%;border-collapse:collapse;font-size:11px;}
+table.mt th{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:5px 8px;text-align:left;border-bottom:1px solid var(--b1);}
+table.mt td{padding:6px 8px;border-bottom:1px solid var(--b1);vertical-align:middle;}
+table.mt tr:last-child td{border-bottom:none;}
+.uu{color:var(--bull);font-weight:700;}.dd{color:var(--bear);font-weight:700;}
+.imp{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;}
+.ic{background:var(--pbg);color:var(--p);}.ih{background:#EDE9FF;color:#5B21B6;}.im{background:var(--neubg);color:#B45309;}.il{background:var(--bg);color:var(--t3);}
+.dh{color:var(--bear);font-weight:600;}.dm{color:var(--neu);}.dl{color:var(--bull);}
 .ch{color:var(--bull);font-weight:600;}.cm{color:var(--neu);}.cl{color:var(--bear);}
-.ascr{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;scrollbar-width:thin;scrollbar-color:var(--b2) transparent;}
-.ac{background:var(--white);border:1px solid var(--b1);border-radius:var(--r10);padding:12px 13px;min-width:152px;flex-shrink:0;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s,box-shadow .15s;}
-.ac::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:transparent;transition:background .15s;}
-.ac:hover::before,.ac.active::before{background:var(--gradient);}
-.ac:hover{border-color:var(--purple-border);box-shadow:0 2px 10px rgba(107,33,214,0.1);}
-.ac.active{border-color:var(--purple-border);}
+.ascr{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;}
+.acard{background:var(--w);border:1px solid var(--b1);border-radius:var(--r10);padding:12px 13px;min-width:155px;flex-shrink:0;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s;}
+.acard::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:transparent;transition:background .15s;}
+.acard:hover::before,.acard.active::before{background:var(--grad);}
+.acard:hover{border-color:var(--pb);}
 .ac-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
-.ac-name{font-size:12px;font-weight:600;color:var(--t1);}
-.ac-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.ac-spec{font-size:9px;color:var(--purple);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
-.ac-date{font-size:10px;color:var(--t3);margin-bottom:6px;}
-.ac-sum{font-size:10px;color:var(--t2);line-height:1.5;margin-bottom:8px;}
-.ac-stars{font-size:10px;color:var(--purple);}
-.ac-stale{font-size:9px;color:var(--neu);font-weight:500;}
-.ct{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.cnum{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;color:var(--purple);margin-bottom:3px;}
-.cnum span{font-size:15px;color:var(--t3);font-weight:400;}
-.csub{font-size:11px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.cpill{font-size:10px;padding:2px 9px;border-radius:99px;background:var(--bull-bg);color:var(--bull);border:1px solid rgba(5,150,105,.2);font-weight:500;}
+.ac-name{font-size:12px;font-weight:600;}
+.ac-dot{width:8px;height:8px;border-radius:50%;}
+.ac-spec{font-size:9px;color:var(--p);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+.ac-date{font-size:10px;color:var(--t3);margin-bottom:5px;}
+.ac-sum{font-size:10px;color:var(--t2);line-height:1.5;margin-bottom:7px;}
+.ac-stars{font-size:10px;color:var(--p);}
+.stale-lbl{font-size:9px;color:var(--bear);font-weight:600;}
 .cbr{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
 .cbn{font-size:11px;color:var(--t2);width:90px;flex-shrink:0;}
 .cbt{flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--b1);}
-.cbf{height:100%;border-radius:3px;background:var(--gradient);}
-.cbv{font-size:11px;color:var(--t1);width:38px;text-align:right;font-family:'JetBrains Mono',monospace;font-weight:500;}
-.sm{color:var(--neu);}
-.cop{background:var(--white);border:1px solid var(--b1);border-radius:var(--r14);padding:16px 18px;margin-bottom:8px;box-shadow:0 2px 8px rgba(107,33,214,0.06);}
-.modes{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
-.mt{font-size:11px;padding:5px 12px;border-radius:var(--r6);border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;font-family:inherit;transition:all .12s;}
-.mt:hover{border-color:var(--purple-border);color:var(--purple);}
-.mt.active{background:var(--purple-dim);border-color:var(--purple-border);color:var(--purple);font-weight:500;}
-.qrow{display:flex;gap:8px;}
-.qi{flex:1;font-size:12px;padding:9px 13px;border-radius:var(--r6);border:1px solid var(--b2);background:var(--white);color:var(--t1);font-family:inherit;}
-.qi:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(107,33,214,0.1);}
-.qi::placeholder{color:var(--t4);}
-.qb{font-size:12px;padding:9px 20px;border-radius:var(--r6);background:var(--gradient);color:#fff;border:none;cursor:pointer;font-weight:600;font-family:inherit;box-shadow:0 2px 8px rgba(107,33,214,0.3);}
-.qb:hover{opacity:.9;}
+.cbf{height:100%;border-radius:3px;background:var(--grad);}
+.cbv{font-size:11px;color:var(--t1);width:38px;text-align:right;font-weight:500;}
+.cnum{font-size:28px;font-weight:700;color:var(--p);margin-bottom:3px;}
+.csub{font-size:11px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.cpill{font-size:10px;padding:2px 9px;border-radius:99px;background:var(--bullbg);color:var(--bull);border:1px solid rgba(5,150,105,.2);}
+.mtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.mt{font-size:11px;padding:5px 12px;border-radius:var(--r6);border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;font-family:inherit;}
+.mt:hover{border-color:var(--pb);color:var(--p);}
+.mt.active{background:var(--pdim);border-color:var(--pb);color:var(--p);font-weight:500;}
+.qa-row{display:flex;gap:8px;}
+.qa-row input{flex:1;font-size:13px;padding:9px 13px;border-radius:var(--r6);border:1px solid var(--b2);background:var(--w);color:var(--t1);font-family:inherit;}
+.qa-row input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px var(--pdim);}
+.qa-row input::placeholder{color:var(--t4);}
+.qa-btn{font-size:13px;padding:9px 20px;border-radius:var(--r6);background:var(--grad);color:#fff;border:none;cursor:pointer;font-weight:600;font-family:inherit;}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
-.chip{font-size:11px;padding:4px 11px;border-radius:99px;border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;transition:all .12s;}
-.chip:hover{border-color:var(--purple-border);color:var(--purple);background:var(--purple-dim);}
-.qa{margin-top:12px;font-size:12px;line-height:1.7;background:var(--purple-dim);border-radius:var(--r10);padding:14px 16px;border-left:3px solid var(--purple);}
-.qsr{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid var(--purple-border);flex-wrap:wrap;}
-.qst{font-size:10px;color:var(--t3);padding:2px 7px;border:1px solid var(--b1);border-radius:4px;background:var(--white);}
-.qcf{font-size:10px;font-weight:700;margin-left:auto;}
-.ld{display:flex;align-items:center;gap:8px;color:var(--t3);font-size:12px;}
-@keyframes sp{to{transform:rotate(360deg);}}
-.spin{animation:sp .9s linear infinite;display:inline-block;}
-footer{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--b1);margin-top:4px;}
-footer .fl{font-size:11px;color:var(--t3);}
-footer .fl em{color:var(--purple);font-style:normal;}
-footer .fr{font-size:10px;color:var(--t4);}
-@media print{
-  .topbar{background:var(--purple)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .cop,.chips,.modes,.qrow,footer{display:none;}
-  .panel,.tw{break-inside:avoid;}
-}
+.chip{font-size:11px;padding:4px 12px;border-radius:99px;border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;}
+.chip:hover{border-color:var(--pb);color:var(--p);}
+.qa-ans{margin-top:12px;font-size:13px;line-height:1.7;background:var(--pdim);border-radius:var(--r10);padding:14px 16px;border-left:3px solid var(--p);}
+.qa-src{font-size:10px;color:var(--t3);margin-top:8px;padding-top:6px;border-top:1px solid var(--pb);}
+.na-msg{font-size:12px;color:var(--t3);text-align:center;padding:32px;font-style:italic;}
+.stale-warning{font-size:11px;color:var(--bear);background:var(--bearbg);border:1px solid rgba(220,38,38,.2);border-radius:var(--r6);padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spin{animation:spin .8s linear infinite;display:inline-block;}
+footer{text-align:center;padding:14px;font-size:11px;color:var(--t3);border-top:1px solid var(--b1);margin-top:4px;}
+footer em{color:var(--p);font-style:normal;}
 </style>
 </head>
 <body>
-<div class="w">
+<div class="wrap">
 
+<!-- TOPBAR -->
 <div class="topbar">
-  <div style="display:flex;align-items:center;gap:14px;">
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.5 9.5H22L16 14L18.5 21.5L12 17.5L5.5 21.5L8 14L2 9.5H9.5L12 2Z" fill="white" fill-opacity="0.9"/></svg>
+  <div class="brand">
+    <!-- Nova wordmark SVG -->
+    <svg height="26" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
+    </svg>
     <div>
-      <div class="nova-mark">Nova <em>Market Intelligence</em></div>
-      <div class="tb-meta">47 reports indexed &nbsp;·&nbsp; Last sync Jan 20, 2025</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence</div>
+      <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
-    <span class="demo-pill">Demo mode</span>
   </div>
-  <div class="tb-right">
-    <div class="live"><span class="ldot"></span>Live</div>
-    <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Briefing</button>
-    <button class="btn white"><i class="ti ti-refresh"></i> Sync SharePoint</button>
+  <div class="tbr">
+    <span class="sdot" id="sdot"></span>
+    <button class="tbtn" onclick="doSync()"><i class="ti ti-refresh"></i> Sync Drive</button>
+    <button class="tbtn w" id="authBtn" onclick="initiateAuth()"><i class="ti ti-login"></i> Connect</button>
   </div>
 </div>
 
-<div class="tw">
-  <div class="tw-hd">
-    <div class="tw-title"><i class="ti ti-sparkles"></i> Executive Takeaways</div>
-    <button class="regen-btn">Regenerate</button>
+<!-- AUTH -->
+<div id="authPanel" class="panel">
+  <div class="auth-box">
+    <i class="ti ti-brand-google-drive" style="font-size:52px;color:var(--p);display:block;margin-bottom:16px;"></i>
+    <h2>Connect to Google Drive</h2>
+    <p>Connect your Google account to load reports from <strong>Nova_Market_Intelligence</strong>.</p>
+    <button class="auth-btn" onclick="initiateAuth()"><i class="ti ti-login"></i> &nbsp;Sign in with Google</button>
   </div>
-  <div id="twl"></div>
 </div>
 
-<div class="g2">
+<!-- MAIN -->
+<div id="main" style="display:none;">
+
+  <div class="metrics">
+    <div class="metric"><div class="mv" id="mF">—</div><div class="ml">Files indexed</div></div>
+    <div class="metric"><div class="mv" id="mS">—</div><div class="ml">Sources</div></div>
+    <div class="metric"><div class="mv" id="mP">—</div><div class="ml">Parsed</div></div>
+    <div class="metric"><div class="mv" id="mE">—</div><div class="ml">Parse errors</div></div>
+  </div>
+
+  <div id="progWrap" class="pw" style="display:none;">
+    <div class="pl" id="progLbl">Loading...</div>
+    <div class="pt"><div class="pb" id="progBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="parse-status" id="parseStatus" style="display:none;">
+    <div class="ps-title"><i class="ti ti-info-circle"></i> Parse status</div>
+    <div class="ps-list" id="pslist"></div>
+  </div>
+
+  <!-- CATEGORY TABS -->
+  <div class="cat-tabs">
+    <div class="cat-tab active" onclick="showCat('wfe',this)">
+      <div class="ct-icon"><i class="ti ti-tools"></i></div>
+      <div class="ct-name">WFE</div><div class="ct-sub">Wafer Fab Equipment</div>
+    </div>
+    <div class="cat-tab" onclick="showCat('capex',this)">
+      <div class="ct-icon"><i class="ti ti-building-factory-2"></i></div>
+      <div class="ct-name">Capex</div><div class="ct-sub">Capital Expenditure</div>
+    </div>
+    <div class="cat-tab" onclick="showCat('revenue',this)">
+      <div class="ct-icon"><i class="ti ti-chart-line"></i></div>
+      <div class="ct-name">Industry Revenue</div><div class="ct-sub">Semiconductor Market</div>
+    </div>
+    <div class="cat-tab" onclick="showCat('processcontrol',this)">
+      <div class="ct-icon"><i class="ti ti-microscope"></i></div>
+      <div class="ct-name">Process Control</div><div class="ct-sub">Gartner & TechInsights</div>
+    </div>
+  </div>
+
+  <!-- WFE PANEL -->
+  <div class="cat-panel active" id="panel-wfe">
+    <div class="panel">
+      <div class="cat-header">
+        <div class="cat-title">WFE Forecast ($M)</div>
+        <div class="cat-actions">
+          <button class="act-btn" onclick="downloadChart('wfe')"><i class="ti ti-download"></i> PNG</button>
+          <button class="act-btn" onclick="downloadCSV('wfe')"><i class="ti ti-file-spreadsheet"></i> CSV</button>
+        </div>
+      </div>
+      <div class="atogs" id="wfe-toggles"></div>
+      <div class="year-sel-wrap"><div class="year-sel-label">Time period</div><div class="year-sel" id="wfe-years"></div></div>
+      <div class="chart-wrap"><canvas id="wfe-chart"></canvas></div>
+      <div class="dt-wrap" id="wfe-table"><div class="na-msg">Connect and sync to load WFE data.</div></div>
+    </div>
+  </div>
+
+  <!-- CAPEX PANEL -->
+  <div class="cat-panel" id="panel-capex">
+    <div class="panel">
+      <div class="cat-header">
+        <div class="cat-title">Capex Forecast ($M)</div>
+        <div class="cat-actions">
+          <button class="act-btn" onclick="downloadChart('capex')"><i class="ti ti-download"></i> PNG</button>
+          <button class="act-btn" onclick="downloadCSV('capex')"><i class="ti ti-file-spreadsheet"></i> CSV</button>
+        </div>
+      </div>
+      <div class="atogs" id="capex-toggles"></div>
+      <div class="year-sel-wrap"><div class="year-sel-label">Time period</div><div class="year-sel" id="capex-years"></div></div>
+      <div class="chart-wrap"><canvas id="capex-chart"></canvas></div>
+      <div class="dt-wrap" id="capex-table"><div class="na-msg">Connect and sync to load Capex data.</div></div>
+    </div>
+  </div>
+
+  <!-- REVENUE PANEL -->
+  <div class="cat-panel" id="panel-revenue">
+    <div class="panel">
+      <div class="cat-header">
+        <div class="cat-title">Industry Revenue Forecast ($M)</div>
+        <div class="cat-actions">
+          <button class="act-btn" onclick="downloadChart('revenue')"><i class="ti ti-download"></i> PNG</button>
+          <button class="act-btn" onclick="downloadCSV('revenue')"><i class="ti ti-file-spreadsheet"></i> CSV</button>
+        </div>
+      </div>
+      <div class="atogs" id="revenue-toggles"></div>
+      <div class="year-sel-wrap"><div class="year-sel-label">Time period</div><div class="year-sel" id="revenue-years"></div></div>
+      <div class="chart-wrap"><canvas id="revenue-chart"></canvas></div>
+      <div class="dt-wrap" id="revenue-table"><div class="na-msg">Connect and sync to load Revenue data.</div></div>
+    </div>
+  </div>
+
+  <!-- PROCESS CONTROL PANEL -->
+  <div class="cat-panel" id="panel-processcontrol">
+    <div class="panel">
+      <div class="cat-header">
+        <div class="cat-title">Process Control Market ($M)</div>
+        <div class="cat-actions">
+          <button class="act-btn" onclick="downloadChart('pc')"><i class="ti ti-download"></i> PNG</button>
+          <button class="act-btn" onclick="downloadCSV('pc')"><i class="ti ti-file-spreadsheet"></i> CSV</button>
+        </div>
+      </div>
+      <div class="pc-dropdown">
+        <label>Segment:</label>
+        <select id="pcSegment" onchange="drawPC()"></select>
+        <label style="margin-left:12px;">Quarter:</label>
+        <select id="pcQuarter" onchange="drawPC()">
+          <option value="current">Current (latest)</option>
+        </select>
+      </div>
+      <div class="atogs" id="pc-toggles"></div>
+      <div class="chart-wrap"><canvas id="pc-chart"></canvas></div>
+      <div class="dt-wrap" id="pc-table"><div class="na-msg">Process Control data will appear after syncing files from Gartner and TechInsights.</div></div>
+    </div>
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="section-divider"><span>Intelligence dashboard</span></div>
+
+  <!-- TAKEAWAYS -->
+  <div class="panel accent">
+    <div class="ph">
+      <div class="ph-l"><i class="ti ti-sparkles"></i> Executive Takeaways <span style="font-size:10px;color:var(--t3);font-weight:400;margin-left:6px;">— files older than 6 months excluded</span></div>
+      <button class="act-btn" onclick="generateTakeaways()">Regenerate</button>
+    </div>
+    <div id="twList"><div class="na-msg">Connect and sync to generate AI takeaways.</div></div>
+  </div>
+
+  <!-- WHAT CHANGED + DIVERGENCE -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="ph"><div class="ph-l"><i class="ti ti-git-diff"></i> What Changed</div></div>
+      <table class="mt"><thead><tr><th>Topic</th><th>Change</th><th>Dir</th><th>Source</th><th>Nova</th></tr></thead>
+      <tbody id="wcBody"><tr><td colspan="5" style="padding:16px;text-align:center;color:var(--t3);font-style:italic;font-size:12px;">N/A — no data yet</td></tr></tbody></table>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="ph-l"><i class="ti ti-chart-bubble"></i> Analyst Divergence</div></div>
+      <table class="mt"><thead><tr><th>Topic</th><th>Divergence</th><th>Confidence</th></tr></thead>
+      <tbody id="divBody"><tr><td colspan="3" style="padding:16px;text-align:center;color:var(--t3);font-style:italic;font-size:12px;">N/A — no data yet</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- ANALYST CARDS -->
+  <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;">Analyst sources</div>
+  <div class="ascr" id="aCards"><div class="na-msg" style="padding:12px;">No sources detected yet</div></div>
+
+  <!-- CONSENSUS + TIMELINE -->
+  <div class="two-col" style="margin-top:10px;">
+    <div class="panel">
+      <div class="ph"><div class="ph-l"><i class="ti ti-calculator"></i> WFE Consensus</div></div>
+      <div id="consBody"><div class="na-msg">N/A — insufficient data</div></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="ph-l"><i class="ti ti-timeline"></i> Sentiment Timeline</div></div>
+      <div style="position:relative;height:170px;"><canvas id="tlChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- FILES -->
   <div class="panel">
-    <div class="ph"><i class="ti ti-git-diff"></i> What Changed This Quarter</div>
-    <table><thead><tr><th>Topic</th><th>Change</th><th>Dir</th><th>Source</th><th>Nova</th></tr></thead><tbody id="wcb"></tbody></table>
+    <div class="ph"><div class="ph-l"><i class="ti ti-files"></i> Files in Drive</div><div style="font-size:10px;color:var(--t3);" id="fileMeta"></div></div>
+    <div style="display:flex;flex-direction:column;gap:5px;max-height:280px;overflow-y:auto;" id="fileList"><div class="na-msg">No files loaded</div></div>
   </div>
+
+  <!-- COPILOT -->
   <div class="panel">
-    <div class="ph"><i class="ti ti-chart-bubble"></i> Analyst Divergence</div>
-    <table><thead><tr><th>Topic</th><th>Divergence</th><th>Confidence</th></tr></thead><tbody id="divb"></tbody></table>
+    <div class="ph"><div class="ph-l"><i class="ti ti-robot"></i> AI Research Copilot</div></div>
+    <div class="mtabs">
+      <button class="mt active" onclick="setMode('general',this)">General</button>
+      <button class="mt" onclick="setMode('nova',this)">Nova Impact</button>
+      <button class="mt" onclick="setMode('sales',this)">Sales Mode</button>
+      <button class="mt" onclick="setMode('risk',this)">Risk Analysis</button>
+      <button class="mt" onclick="setMode('compare',this)">Compare Sources</button>
+    </div>
+    <div class="qa-row">
+      <input type="text" id="qaIn" placeholder="Ask a question about your reports..." onkeydown="if(event.key==='Enter')askQ()"/>
+      <button class="qa-btn" onclick="askQ()">Ask</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div id="qaOut"></div>
   </div>
+
 </div>
-
-<div class="sl">Analyst sources — click to explore</div>
-<div class="ascr" id="acards"></div>
-
-<div class="ct">
-  <div class="panel">
-    <div class="ph"><i class="ti ti-calculator"></i> WFE Consensus 2025E</div>
-    <div class="cnum">$91.5<span>B</span></div>
-    <div class="csub">Weighted consensus &nbsp;·&nbsp; Range $87–95B <span class="cpill">HIGH Confidence</span></div>
-    <div id="cbars"></div>
-  </div>
-  <div class="panel">
-    <div class="ph"><i class="ti ti-timeline"></i> Analyst Sentiment Timeline</div>
-    <div style="position:relative;height:175px;"><canvas id="tlc"></canvas></div>
-  </div>
-</div>
-
-<div class="cop">
-  <div class="ph"><i class="ti ti-robot"></i> AI Research Copilot</div>
-  <div class="modes">
-    <button class="mt active" onclick="setMode('general',this)">General</button>
-    <button class="mt" onclick="setMode('nova',this)">Nova Impact</button>
-    <button class="mt" onclick="setMode('sales',this)">Sales Mode</button>
-    <button class="mt" onclick="setMode('risk',this)">Risk Analysis</button>
-    <button class="mt" onclick="setMode('delta',this)">What Changed</button>
-    <button class="mt" onclick="setMode('compare',this)">Compare Analysts</button>
-  </div>
-  <div class="qrow">
-    <input class="qi" id="qin" placeholder="Ask a question about the semiconductor market..." onkeydown="if(event.key==='Enter')ask()"/>
-    <button class="qb" onclick="ask()">Ask</button>
-  </div>
-  <div class="chips" id="qchips"></div>
-  <div id="qout" style="display:none;"></div>
-</div>
-
-<footer>
-  <div class="fl"><em>Nova</em> Market Intelligence v2.0</div>
-  <div class="fr">Internal use only &nbsp;·&nbsp; Marketing Research Hub</div>
-</footer>
+<footer><em>Nova</em> Market Intelligence &nbsp;·&nbsp; Internal use only &nbsp;·&nbsp; Marketing Research Hub</footer>
 </div>
 
 <script>
-const TW=[
-  {t:'AI-driven advanced packaging demand accelerating — CoWoS and HBM metrology intensity significantly higher than traditional flows.',s:5,src:"Yole Jan'25"},
-  {t:'TSMC 2025 capex revised +8% by JPMorgan — direct increase in leading-edge metrology demand across 3nm and 2nm nodes.',s:5,src:"JPM Feb'25"},
-  {t:'Weighted WFE consensus $91.5B — strongest agreement on AI/Data Center; highest divergence on memory recovery timing.',s:4,src:'5 analysts'},
-  {t:'DRAM recovery delayed 2 quarters per Goldman Sachs — memory capex push-out affects Nova exposure in H1 2025.',s:3,src:"GS Jan'25"},
-  {t:'China WFE restrictions worsening — impacts ~15% of global equipment spend, increasing geopolitical risk.',s:3,src:"SEMI Nov'24"},
-];
-document.getElementById('twl').innerHTML=TW.map(t=>`<div class="tw-row"><span class="tw-arr">▶</span><span class="tw-tx">${t.t}</span><div class="tw-bg"><span class="sb ${t.s===5?'s5':t.s===4?'s4':'s3'}">Score ${t.s}</span><span class="stg">${t.src}</span></div></div>`).join('');
+const CLIENT_ID='828139804659-dcg8dep3ihbmn4sgiu5js4kndp8kf1o3.apps.googleusercontent.com';
+const FOLDER='Nova_Market_Intelligence';
+const STALE_MONTHS=6;
 
-const WC=[
-  {tp:'TSMC CapEx',ch:'+8% revision',dir:'↑↑',dc:'uu',src:"JPM Feb'25",imp:'CRITICAL',ic:'ic'},
-  {tp:'AI Packaging',ch:'Demand acceleration',dir:'↑↑',dc:'uu',src:"Yole Jan'25",imp:'CRITICAL',ic:'ic'},
-  {tp:'DRAM Recovery',ch:'Delayed 2 quarters',dir:'↓↓',dc:'dd',src:"GS Jan'25",imp:'MED',ic:'im'},
-  {tp:'China WFE',ch:'Restrictions worsening',dir:'↓↓',dc:'dd',src:"SEMI Nov'24",imp:'MED',ic:'im'},
-  {tp:'2nm Ramp',ch:'Later than consensus',dir:'↓',dc:'d',src:"TI Oct'24",imp:'LOW',ic:'il'},
-];
-document.getElementById('wcb').innerHTML=WC.map(r=>`<tr><td style="font-weight:500;">${r.tp}</td><td style="color:var(--t2);">${r.ch}</td><td class="${r.dc}">${r.dir}</td><td style="font-size:10px;color:var(--t3);">${r.src}</td><td><span class="imp ${r.ic}">${r.imp}</span></td></tr>`).join('');
+/* ── PROCESS CONTROL SEGMENTS ── */
+const PC_SEGMENTS_TI={
+  'Total Process Diagnostics':7,'Wafer Fab Process Control':8,'Film/Stack/Shape Metrology':9,
+  'Ellipsometers':10,'Optical Surface Profiling':12,'Optical Shape/CD':15,'Overlay Metrology':17,
+  'CD SEMs':20,'Defect Inspection Tools':21,'Optical Patterned Wafer Inspection':22,
+  'Un-patterned Darkfield Inspection':23,'E-beam Inspection':26,'Defect Review Stations':27,
+  'Reticle Inspection & Repair':29,'Wafer Level Pkg Inspection':35,'Software & Data Analytics':38
+};
+const PC_SEGMENTS_GARTNER={
+  'Total Process Control':88,'Wafer Inspection and Defect Review':78,
+  'Optical Patterned Wafer Inspection':75,'E-Beam Wafer Inspection/Metrology':74,
+  'SEM Defect Review and Classification':76,'Wafer-Level Packaging Inspection':72,
+  'Unpatterned Wafer Inspection':73,'Overlay Metrology':82,'Lithography Metrology':83,
+  'Thin Film Metrology':84,'CD SEM':79
+};
 
-const DV=[
-  {t:'Memory recovery',d:'HIGH',dc:'dh',c:'LOW',cc:'cl'},{t:'China CapEx',d:'HIGH',dc:'dh',c:'LOW',cc:'cl'},
-  {t:'Automotive timing',d:'MED',dc:'dm',c:'MED',cc:'cm'},{t:'WFE total 2025',d:'LOW',dc:'dl',c:'HIGH',cc:'ch'},
-  {t:'AI / Data Centers',d:'LOW',dc:'dl',c:'HIGH',cc:'ch'},{t:'Adv. Packaging',d:'LOW',dc:'dl',c:'HIGH',cc:'ch'},
-];
-document.getElementById('divb').innerHTML=DV.map(r=>`<tr><td>${r.t}</td><td class="${r.dc}">${r.d}</td><td class="${r.cc}">${r.c}</td></tr>`).join('');
+/* ── STATE ── */
+let tok,allFiles=[],qaMode='general';
+let charts={wfe:null,capex:null,revenue:null,pc:null,tl:null};
+let datasets={wfe:{},capex:{},revenue:{},pc:{}};
+let pcData={ti:{},gartner:{}}; // {segmentName: {year: value}}
+let allYears={wfe:[],capex:[],revenue:[]};
+let selYears={wfe:null,capex:null,revenue:null};
+let hidden={wfe:new Set(),capex:new Set(),revenue:new Set(),pc:new Set()};
+let parseLog=[];
 
-const AN=[
-  {n:'JPMorgan',s:'bull',sp:'WFE & Financial',d:"Feb 2025",sm:'WFE recovery led by AI capex; TSMC +8% revision.',st:5,stale:false},
-  {n:'Goldman Sachs',s:'neutral',sp:'Macro & Risk',d:"Jan 2025",sm:'Cautious optimism; memory H2 recovery, H1 soft.',st:3,stale:false},
-  {n:'Yole',s:'bull',sp:'Packaging Expert',d:"Jan 2025",sm:'Advanced packaging boom; OSAT tight through 2026.',st:5,stale:false},
-  {n:'Gartner',s:'bull',sp:'Cycle & TAM',d:"Dec 2024",sm:'Semiconductor returns to growth; AI chips outperform.',st:4,stale:false},
-  {n:'SEMI',s:'neutral',sp:'Equipment Orders',d:"Nov 2024",sm:'WFE $87B; equipment orders improving steadily.',st:3,stale:true},
-  {n:'TechInsights',s:'neutral',sp:'Node Roadmaps',d:"Oct 2024",sm:'2nm ramp delayed; node scaling continues.',st:3,stale:true},
-  {n:'Evercore',s:'bull',sp:'SPE Positioning',d:"Sep 2024",sm:'Bullish SPE; Nova cited in process control.',st:4,stale:true},
-  {n:'Barclays',s:'bull',sp:'Supply Chain',d:"Aug 2024",sm:'Inventory digestion nearly complete.',st:3,stale:true},
-];
-const acEl=document.getElementById('acards');
-AN.forEach(a=>{
-  const sc=a.s==='bull'?'var(--bull)':a.s==='bear'?'var(--bear)':'var(--neu)';
-  const el=document.createElement('div');el.className='ac';
-  el.innerHTML=`<div class="ac-top"><span class="ac-name">${a.n}</span><span class="ac-dot" style="background:${sc}"></span></div><div class="ac-spec">${a.sp}</div><div class="ac-date">${a.d}${a.stale?' <span class="ac-stale">⚠ Stale</span>':''}</div><div class="ac-sum">${a.sm}</div><div class="ac-stars">${'★'.repeat(a.st)+'☆'.repeat(5-a.st)}</div>`;
-  el.onclick=()=>{document.querySelectorAll('.ac').forEach(x=>x.classList.remove('active'));el.classList.add('active');};
-  acEl.appendChild(el);
-});
+/* ── COLORS ── */
+const PALETTE=['#6B21D6','#DC2626','#059669','#D97706','#2D6BA0','#A855F7','#0891B2','#374151','#7C3AED','#B45309'];
+const srcClr={};let ci=0;
+function clr(s){if(!srcClr[s])srcClr[s]=PALETTE[ci++%PALETTE.length];return srcClr[s];}
+const SRC_SPEC={'Gartner':'Cycle & TAM','TechInsights':'Node Roadmaps & WFE','JPMorgan':'WFE & Financial','Goldman Sachs':'Macro & Risk','Yole':'Packaging Expert','SEMI':'Equipment Orders','Barclays':'Supply Chain','Evercore':'SPE Positioning','Nova Internal':'Internal','Other':'Research'};
 
-const CB=[{n:'JPMorgan',v:95,s:false},{n:'Yole',v:92,s:false},{n:'Goldman Sachs',v:90,s:false},{n:'Gartner',v:88,s:false},{n:'SEMI',v:87,s:true}];
-document.getElementById('cbars').innerHTML=CB.map(b=>{const p=(b.v-80)/15*100;return`<div class="cbr"><span class="cbn">${b.n}${b.s?' <span class="sm">⚠</span>':''}</span><div class="cbt"><div class="cbf" style="width:${p}%;opacity:${b.s?.45:1}"></div></div><span class="cbv">$${b.v}B</span></div>`;}).join('');
+/* ── SOURCE DETECTION ── */
+function guessSource(name){
+  const n=name.toLowerCase();
+  if(n.includes('gartner'))return'Gartner';
+  if(n.includes('jpmorgan')||n.includes('jpm'))return'JPMorgan';
+  if(n.includes('goldman'))return'Goldman Sachs';
+  if(n.includes('yole'))return'Yole';
+  if(n.startsWith('ti ')||n.includes(' ti ')||n.includes('ti_')||n.includes('techinsight')||n.includes('vlsi')||n.includes('semiconductor_forecast')||n.includes('wfe forecast')||n.includes('semiconductor_wfe'))return'TechInsights';
+  if(n.includes('barclays'))return'Barclays';
+  if(n.includes('evercore'))return'Evercore';
+  if(n.includes('ciq'))return'S&P CIQ';
+  if(n.includes('semi '))return'SEMI';
+  if(n.includes('nova')||n.includes('customer'))return'Nova Internal';
+  return'Other';
+}
 
-new Chart(document.getElementById('tlc').getContext('2d'),{type:'line',data:{labels:["Q1'24","Q2'24","Q3'24","Q4'24","Q1'25"],datasets:[
-  {label:'JPMorgan',data:[2,2,2,3,3],borderColor:'#6B21D6',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#6B21D6',tension:.3},
-  {label:'Goldman Sachs',data:[2,1,2,2,2],borderColor:'#2D6BA0',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#2D6BA0',tension:.3},
-  {label:'Yole',data:[2,2,3,3,3],borderColor:'#A855F7',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#A855F7',tension:.3},
-  {label:'Gartner',data:[1,2,2,3,3],borderColor:'#059669',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#059669',tension:.3},
-]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8B85A8',font:{size:10},boxWidth:8,padding:12}}},scales:{y:{min:0,max:4,ticks:{font:{size:10},color:'#8B85A8',callback:v=>['','Bear','Neutral','Bull',''][v]||''},grid:{color:'rgba(107,33,214,0.06)'},border:{display:false}},x:{ticks:{font:{size:10},color:'#8B85A8'},grid:{display:false},border:{display:false}}}}});
+/* ── STALENESS ── */
+function isStale(modifiedTime){return(Date.now()-new Date(modifiedTime))>STALE_MONTHS*30*86400000;}
+function isVeryStale(modifiedTime){return(Date.now()-new Date(modifiedTime))>STALE_MONTHS*30*86400000;}
 
-const CHIPS={general:['WFE consensus 2025?','Biggest risks?','Most bullish analyst?'],nova:['Implications for Nova?','Packaging inspection demand?','Process control trends?'],sales:['Talking points for TSMC?','AI packaging narrative?','Position vs. KLA?'],risk:['Biggest downside risks?','China WFE risk?','Memory recovery uncertainty?'],delta:['What changed vs. last quarter?','Largest revisions?','New themes?'],compare:['JPM vs. Goldman on WFE?','Most bullish on packaging?','Biggest divergence?']};
-const ANS={general:`Based on 5 analyst reports, the weighted WFE consensus for 2025 is <strong>$91.5B</strong> — ~12% YoY growth. JPMorgan leads at $95B driven by AI capex acceleration; SEMI is most conservative at $87B. All analysts agree AI/Data Center is the primary growth driver. Memory recovery remains the key uncertainty.`,nova:`<strong>Top Nova implications from current analyst consensus:</strong><br><br>⭐ <strong>Score 5 — Critical:</strong> Advanced packaging inspection demand accelerating. Yole reports CoWoS and HBM driving significantly higher metrology intensity — direct uplift for Nova optical metrology tools.<br><br>■ <strong>Score 5 — Critical:</strong> TSMC capex revised up +8% (JPMorgan). More 3nm/2nm wafers = more metrology steps = direct Nova revenue opportunity.<br><br>■ <strong>Score 3 — Medium:</strong> DRAM recovery delay creates H1 2025 softness — monitor memory fab capex closely.`,sales:`<strong>3 talking points for a customer conversation:</strong><br><br><strong>1.</strong> "According to Yole's January 2025 report, advanced packaging demand is accelerating — CoWoS and HBM adoption creates significantly higher metrology requirements per wafer."<br><br><strong>2.</strong> "JPMorgan revised TSMC's 2025 capex upward by 8% in February — continued investment in leading-edge capacity, where precision metrology matters most."<br><br><strong>3.</strong> "Analyst consensus puts 2025 WFE at $91.5B — the recovery is real and driven by AI, the highest metrology-intensity segment in the market."`,risk:`<strong>Top risks by severity × Nova exposure:</strong><br><br>🔴 <strong>HIGH × High exposure:</strong> Memory recovery delayed 2 quarters (Goldman Sachs) — Nova memory fab exposure affected in H1 2025.<br><br>🔴 <strong>HIGH × Medium exposure:</strong> China WFE restrictions worsening (SEMI) — ~15% of global WFE at risk.<br><br>🟡 <strong>MEDIUM:</strong> 2nm ramp delay (TechInsights) — leading-edge metrology push-out ~1-2 quarters.`,delta:`<strong>Top changes since last quarter:</strong><br><br>↑↑ <strong>TSMC CapEx +8%</strong> — JPMorgan revised upward; AI accelerator demand exceeding expectations. [Nova: HIGH]<br><br>↑↑ <strong>AI Packaging — Demand acceleration</strong> — Yole upgraded outlook; CoWoS capacity tight through 2026. [Nova: CRITICAL]<br><br>↓↓ <strong>DRAM Recovery — Delayed 2Q</strong> — Goldman Sachs; inventory digestion slower than expected. [Nova: MEDIUM]`,compare:`<strong>JPMorgan vs. Goldman Sachs on WFE 2025:</strong><br><br>JPMorgan ($95B, Bullish): Sees AI capex as structural, multi-year. Strong conviction on TSMC/Samsung investment continuing regardless of macro.<br><br>Goldman Sachs ($90B, Neutral): More cautious on H1; memory recovery risk real. Agrees on AI direction but thinks magnitude overestimated.<br><br><strong>Divergence: $5B (5.4%) — MEDIUM signal.</strong> Disagreement is on timing, not direction. Both converge by 2026E.`};
+/* ── AUTH ── */
+let tc;
+window.addEventListener('load',()=>{setTimeout(()=>{if(window.google&&google.accounts)tc=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:'https://www.googleapis.com/auth/drive.readonly',callback:onToken});},1500);});
+function initiateAuth(){if(!tc)tc=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:'https://www.googleapis.com/auth/drive.readonly',callback:onToken});tc.requestAccessToken();}
+function onToken(r){if(!r.access_token)return;tok=r.access_token;document.getElementById('authPanel').style.display='none';document.getElementById('main').style.display='block';document.getElementById('sdot').classList.add('live');document.getElementById('authBtn').style.display='none';loadFiles();}
+async function api(url){const r=await fetch(url,{headers:{Authorization:`Bearer ${tok}`}});return r.json();}
 
-let mode='general';
-function setMode(m,btn){mode=m;document.querySelectorAll('.mt').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderChips();document.getElementById('qin').placeholder={general:'Ask about the semiconductor market...',nova:'Ask about implications for Nova...',sales:'Prepare for a customer conversation...',risk:'Ask about market risks...',delta:'Ask what changed since last quarter...',compare:'Compare analysts or topics...'}[m];document.getElementById('qout').style.display='none';}
-function renderChips(){document.getElementById('qchips').innerHTML=(CHIPS[mode]||[]).map(q=>`<span class="chip" onclick="document.getElementById('qin').value='${q}'">${q}</span>`).join('');}
-function ask(){const q=document.getElementById('qin').value.trim();if(!q)return;const out=document.getElementById('qout');out.style.display='block';out.innerHTML='<div class="qa"><div class="ld"><i class="ti ti-loader spin"></i> Searching across 47 indexed reports...</div></div>';setTimeout(()=>{const a=ANS[mode]||ANS.general;out.innerHTML=`<div class="qa"><div>${a}</div><div class="qsr"><span class="qst">JPM Feb'25</span><span class="qst">Yole Jan'25</span><span class="qst">GS Jan'25</span><span class="qst">Gartner Dec'24</span><span class="qcf ch">Confidence: HIGH</span></div></div>`;},1100);}
-renderChips();
+/* ── LOAD FILES ── */
+async function loadFiles(){
+  prog(true,'Searching folder...',10);
+  parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};
+  const s=await api(`https://www.googleapis.com/drive/v3/files?q=name='${FOLDER}' and mimeType='application/vnd.google-apps.folder'&fields=files(id,name)`);
+  if(!s.files?.length){prog(false);document.getElementById('fileList').innerHTML='<div class="na-msg">Folder not found in Drive.</div>';return;}
+  const fid=s.files[0].id;
+  let files=[],pt='';
+  do{const r=await api(`https://www.googleapis.com/drive/v3/files?q='${fid}' in parents and mimeType!='application/vnd.google-apps.folder'&fields=files(id,name,mimeType,modifiedTime,size)&pageSize=100${pt?'&pageToken='+pt:''}`);if(r.files)files=files.concat(r.files);pt=r.nextPageToken||'';}while(pt);
+  allFiles=files;
+  const activeFiles=files.filter(f=>!isVeryStale(f.modifiedTime));
+  document.getElementById('mF').textContent=files.length;
+  const srcs=new Set(files.map(f=>guessSource(f.name)));
+  document.getElementById('mS').textContent=srcs.size;
+  document.getElementById('topMeta').textContent=`${files.length} files (${files.length-activeFiles.length} excluded >6mo) · Last sync: ${new Date().toLocaleString('en-GB')}`;
+  document.getElementById('fileMeta').textContent=`${files.length} files`;
+  renderFileList(files);buildAnalystCards(srcs,files);
+  await parseFiles(files);
+}
+
+/* ── PARSE ── */
+async function parseFiles(files){
+  const parseable=files.filter(f=>f.name.match(/\.xlsx?$|\.xlsm$/i)&&f.size&&parseInt(f.size)<55*1024*1024);
+  let n=0,errors=0;
+  for(const f of parseable){
+    prog(true,`Parsing: ${f.name.substring(0,45)}...`,20+Math.round(n/parseable.length*70));
+    try{const res=await parseExcel(f);parseLog.push({file:f.name,status:res.found?'ok':'skip',msg:res.found?`Found: ${res.cats.join(', ')}`:'No recognizable data patterns'});}
+    catch(e){parseLog.push({file:f.name,status:'warn',msg:`Error: ${e.message}`});errors++;}
+    n++;
+  }
+  document.getElementById('mP').textContent=n;
+  const errEl=document.getElementById('mE');errEl.textContent=errors||'—';errEl.style.color=errors?'var(--bear)':'var(--t3)';
+  prog(false);renderParseStatus();renderAllCats();populatePCDropdown();generateTakeaways();
+}
+
+async function parseExcel(f){
+  const src=guessSource(f.name);const fname=f.name.toLowerCase();
+  const isWFE=fname.includes('wfe')||fname.includes('wafer fab')||(fname.includes('semiconductor')&&!fname.includes('capex'));
+  const isCapex=fname.includes('capex')||fname.includes('capital');
+  const isRevenue=fname.includes('revenue')||fname.includes('dollr');
+  const r=await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,{headers:{Authorization:`Bearer ${tok}`}});
+  const ab=await r.arrayBuffer();
+  const wb=XLSX.read(ab,{type:'array'});
+  const cats=[];
+  const YEARS=['2019','2020','2021','2022','2023','2024','2025','2026','2027','2028','2029','2030','2031'];
+
+  /* ── TECHINSIGHTS: Process Diagnostics sheet ── */
+  const pdSheet=wb.Sheets['Process Diagnostics'];
+  if(pdSheet){
+    const pdRows=XLSX.utils.sheet_to_json(pdSheet,{header:1,defval:null});
+    // Find year header row (row index 5 = row 5, 0-indexed row 4)
+    let yearRow=null,yearCols={};
+    pdRows.forEach((row,ri)=>{
+      if(row&&row.some&&row.some(c=>YEARS.includes(String(c)))){
+        if(!yearRow){yearRow=ri;row.forEach((c,ci)=>{if(YEARS.includes(String(c)))yearCols[String(c)]=ci;});}
+      }
+    });
+    if(yearRow!==null){
+      const years=Object.keys(yearCols).sort();
+      Object.entries(PC_SEGMENTS_TI).forEach(([segName,rowIdx])=>{
+        const row=pdRows[rowIdx];
+        if(row){
+          const vals={};let ok=0;
+          years.forEach(y=>{const v=parseFloat(row[yearCols[y]]);if(!isNaN(v)&&v>0){vals[y]=v;ok++;}});
+          if(ok>=3){if(!pcData.ti[segName])pcData.ti[segName]={};Object.assign(pcData.ti[segName],vals);}
+        }
+      });
+      if(Object.keys(pcData.ti).length)cats.push('Process Control (TI)');
+    }
+  }
+
+  /* ── GARTNER: Wafer Fab Equipment Segments sheet ── */
+  const wfesSheet=wb.Sheets['Wafer Fab Equipment  Segments'];
+  if(wfesSheet){
+    const gRows=XLSX.utils.sheet_to_json(wfesSheet,{header:1,defval:null});
+    let yearRow=null,yearCols={};
+    gRows.forEach((row,ri)=>{
+      if(row&&row.some&&row.some(c=>typeof c==='number'&&c>=2024&&c<=2031)){
+        if(!yearRow){yearRow=ri;row.forEach((c,ci)=>{if(typeof c==='number'&&c>=2024&&c<=2031)yearCols[String(c)]=ci;});}
+      }
+    });
+    if(yearRow!==null){
+      const years=Object.keys(yearCols).sort();
+      Object.entries(PC_SEGMENTS_GARTNER).forEach(([segName,rowIdx])=>{
+        const row=gRows[rowIdx];
+        if(row){
+          const vals={};let ok=0;
+          years.forEach(y=>{const v=parseFloat(row[yearCols[y]]);if(!isNaN(v)&&v>0){vals[y]=v;ok++;}});
+          if(ok>=2){if(!pcData.gartner[segName])pcData.gartner[segName]={};Object.assign(pcData.gartner[segName],vals);}
+        }
+      });
+      if(Object.keys(pcData.gartner).length)cats.push('Process Control (Gartner)');
+    }
+  }
+
+  /* ── GENERIC WFE/CAPEX/REVENUE PARSING ── */
+  wb.SheetNames.forEach(sn=>{
+    const sheet=wb.Sheets[sn];
+    const rows=XLSX.utils.sheet_to_csv(sheet).split('\n').map(r=>r.split(','));
+    let hRow=-1,yCols={};
+    rows.forEach((row,ri)=>{const yc=row.filter(c=>YEARS.includes(c?.trim())).length;if(yc>=4){hRow=ri;row.forEach((c,ci)=>{if(YEARS.includes(c?.trim()))yCols[c.trim()]=ci;});}});
+    const years=Object.keys(yCols).sort();
+    const extractRow=(row)=>{const vals={};let ok=0;years.forEach(y=>{const n=parseFloat(row[yCols[y]]?.replace(/[",\s]/g,''));if(!isNaN(n)&&n>50&&n<5000000){vals[y]=n;ok++;}});return ok>=3?vals:null;};
+    if(hRow>=0){
+      (rows.slice(hRow+1,hRow+100)||[]).forEach(row=>{
+        const first=row[0]?.replace(/[",]/g,'').trim();const fu=first.toUpperCase();
+        if(isWFE&&(fu==='WAFER FAB EQUIPMENT (WFE)'||fu==='WAFER FAB EQUIPMENT'||fu==='WFE'||fu==='TOTAL WAFER FAB EQUIPENT')){const v=extractRow(row);if(v){if(!datasets.wfe[src])datasets.wfe[src]={};Object.assign(datasets.wfe[src],v);if(!cats.includes('WFE'))cats.push('WFE');}}
+        if(isCapex){
+          ['TSMC','Samsung','Micron','SK hynix','Intel'].forEach(co=>{if(first===co){const v=extractRow(row);if(v){const k=`${co}`;if(!datasets.capex[k])datasets.capex[k]={};Object.assign(datasets.capex[k],v);if(!cats.includes('Capex'))cats.push('Capex');}}});
+          if(fu==='TOTAL'||fu.includes('TOP 20 TOTAL')||fu==='GRAND TOTAL'){const v=extractRow(row);if(v){if(!datasets.capex[src])datasets.capex[src]={};Object.assign(datasets.capex[src],v);if(!cats.includes('Capex'))cats.push('Capex');}}
+        }
+        if(isRevenue&&(fu==='GRAND TOTAL'||fu==='TOTAL')){const v=extractRow(row);if(v&&Object.values(v).some(x=>x>10000)){if(!datasets.revenue[src])datasets.revenue[src]={};Object.assign(datasets.revenue[src],v);if(!cats.includes('Revenue'))cats.push('Revenue');}}
+      });
+    }
+  });
+  return{found:cats.length>0,cats};
+}
+
+/* ── PARSE STATUS ── */
+function renderParseStatus(){
+  const el=document.getElementById('pslist');const sEl=document.getElementById('parseStatus');
+  if(!parseLog.length){sEl.style.display='none';return;}
+  sEl.style.display='block';
+  el.innerHTML=parseLog.map(p=>{
+    const c=p.status==='ok'?'var(--bull)':p.status==='warn'?'var(--bear)':'var(--t3)';
+    const icon=p.status==='ok'?'ti-check':p.status==='warn'?'ti-alert-triangle':'ti-minus';
+    return`<div class="ps-item"><i class="ti ${icon}" style="color:${c}"></i><span style="color:${c};font-weight:${p.status==='warn'?'600':'400'}">${p.file.substring(0,50)}</span><span style="color:var(--t3)"> — ${p.msg}</span></div>`;
+  }).join('');
+}
+
+/* ── YEAR SELECTOR ── */
+function buildYearSel(cat){
+  const data=datasets[cat];const srcs=Object.keys(data);
+  const ySet=new Set();srcs.forEach(s=>Object.keys(data[s]).forEach(y=>ySet.add(y)));
+  const years=[...ySet].sort();allYears[cat]=years;
+  const el=document.getElementById(`${cat}-years`);
+  const presets=['All','2020-2024','2024-2030'];
+  let html=presets.map(p=>`<button class="yr-btn${(selYears[cat]===null&&p==='All')||(selYears[cat]===p)?' active':''}" onclick="setYearSel('${cat}','${p}',this)">${p}</button>`).join('');
+  html+=years.map(y=>`<button class="yr-btn${selYears[cat]===y?' active':''}" onclick="setYearSel('${cat}','${y}',this)">${y}</button>`).join('');
+  el.innerHTML=html;
+}
+function setYearSel(cat,val,btn){selYears[cat]=val==='All'?null:val;document.querySelectorAll(`#${cat}-years .yr-btn`).forEach(b=>b.classList.remove('active'));btn.classList.add('active');drawCat(cat);}
+function getYears(cat){const s=selYears[cat];const all=allYears[cat];if(!s)return all;if(s.includes('-')){const[from,to]=s.split('-').map(Number);return all.filter(y=>{const n=parseInt(y);return n>=from&&n<=to;});}return all.includes(s)?[s]:all;}
+
+/* ── RENDER ── */
+function renderAllCats(){['wfe','capex','revenue'].forEach(c=>renderCat(c));}
+function renderCat(cat){
+  const data=datasets[cat];const srcs=Object.keys(data);
+  if(!srcs.length){document.getElementById(`${cat}-table`).innerHTML=`<div class="na-msg">N/A — no ${cat.toUpperCase()} data found in indexed files.</div>`;return;}
+  buildYearSel(cat);renderToggles(cat,srcs);drawCat(cat);
+}
+function renderToggles(cat,srcs){
+  document.getElementById(`${cat}-toggles`).innerHTML=srcs.map(s=>{const c=clr(s);const on=!hidden[cat].has(s);return`<div class="atog${on?'':' off'}" style="border-color:${c};color:${c}" onclick="toggleSrc('${cat}','${s}',this)"><span class="atdot" style="background:${c}"></span>${s}</div>`;}).join('');
+}
+function toggleSrc(cat,src,el){if(hidden[cat].has(src))hidden[cat].delete(src);else hidden[cat].add(src);el.classList.toggle('off');drawCat(cat);}
+
+function drawCat(cat){
+  const data=datasets[cat];const srcs=Object.keys(data).filter(s=>!hidden[cat].has(s));const years=getYears(cat);
+  const single=years.length===1;const ctx=document.getElementById(`${cat}-chart`).getContext('2d');
+  if(charts[cat])charts[cat].destroy();
+  if(single){
+    const yr=years[0];
+    charts[cat]=new Chart(ctx,{type:'bar',data:{labels:srcs,datasets:[{label:yr,data:srcs.map(s=>data[s][yr]||null),backgroundColor:srcs.map(s=>clr(s)+'BB'),borderColor:srcs.map(s=>clr(s)),borderWidth:1,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${(c.raw/1000).toFixed(1)}B`}}},scales:{y:{ticks:{callback:v=>`$${(v/1000).toFixed(0)}B`},grid:{color:'rgba(107,33,214,.06)'},border:{display:false}},x:{grid:{display:false},border:{display:false}}}}});
+  }else{
+    charts[cat]=new Chart(ctx,{type:'line',data:{labels:years,datasets:srcs.map(s=>({label:s,data:years.map(y=>data[s]&&data[s][y]!=null?data[s][y]:null),borderColor:clr(s),backgroundColor:clr(s)+'18',borderWidth:2,pointRadius:4,pointBackgroundColor:clr(s),tension:.3,spanGaps:true,fill:false}))},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:10,padding:12}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: $${(c.raw/1000).toFixed(1)}B`}}},scales:{y:{ticks:{font:{size:10},callback:v=>`$${(v/1000).toFixed(0)}B`},grid:{color:'rgba(107,33,214,.06)'},border:{display:false}},x:{ticks:{font:{size:10}},grid:{display:false},border:{display:false}}}}});
+  }
+  let html=`<table class="dt"><thead><tr><th>Source</th>${years.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
+  srcs.forEach(s=>{html+=`<tr><td><span class="src-dot" style="background:${clr(s)}"></span>${s}</td>${years.map(y=>`<td>${data[s]&&data[s][y]?'$'+(data[s][y]/1000).toFixed(1)+'B':'—'}</td>`).join('')}</tr>`;});
+  html+='</tbody></table>';
+  document.getElementById(`${cat}-table`).innerHTML=html;
+}
+
+/* ── PROCESS CONTROL ── */
+function populatePCDropdown(){
+  const allSegs=new Set([...Object.keys(pcData.ti),...Object.keys(pcData.gartner)]);
+  if(!allSegs.size)return;
+  const sel=document.getElementById('pcSegment');
+  sel.innerHTML=[...allSegs].sort().map(s=>`<option value="${s}">${s}</option>`).join('');
+  drawPC();
+}
+
+function drawPC(){
+  const seg=document.getElementById('pcSegment').value;
+  if(!seg)return;
+  const tiVals=pcData.ti[seg]||{};const gVals=pcData.gartner[seg]||{};
+  const allYrs=new Set([...Object.keys(tiVals),...Object.keys(gVals)]);
+  const years=[...allYrs].sort();
+  if(!years.length){document.getElementById('pc-table').innerHTML='<div class="na-msg">No data for this segment.</div>';return;}
+
+  const tiHidden=hidden.pc.has('TechInsights');const gHidden=hidden.pc.has('Gartner');
+  const tiColor='#6B21D6';const gColor='#DC2626';const avgColor='#059669';
+
+  // Build toggles
+  document.getElementById('pc-toggles').innerHTML=
+    `<div class="atog${tiHidden?' off':''}" style="border-color:${tiColor};color:${tiColor}" onclick="togglePCSrc('TechInsights',this)"><span class="atdot" style="background:${tiColor}"></span>TechInsights</div>`+
+    `<div class="atog${gHidden?' off':''}" style="border-color:${gColor};color:${gColor}" onclick="togglePCSrc('Gartner',this)"><span class="atdot" style="background:${gColor}"></span>Gartner</div>`+
+    `<div class="atog" style="border-color:${avgColor};color:${avgColor};opacity:.6;cursor:default"><span class="atdot" style="background:${avgColor}"></span>Average</div>`;
+
+  const ctx=document.getElementById('pc-chart').getContext('2d');
+  if(charts.pc)charts.pc.destroy();
+
+  const chartDatasets=[];
+  if(!tiHidden&&Object.keys(tiVals).length)chartDatasets.push({label:'TechInsights',data:years.map(y=>tiVals[y]||null),borderColor:tiColor,backgroundColor:tiColor+'18',borderWidth:2,pointRadius:4,pointBackgroundColor:tiColor,tension:.3,spanGaps:true,fill:false});
+  if(!gHidden&&Object.keys(gVals).length)chartDatasets.push({label:'Gartner',data:years.map(y=>gVals[y]||null),borderColor:gColor,backgroundColor:gColor+'18',borderWidth:2,pointRadius:4,pointBackgroundColor:gColor,tension:.3,spanGaps:true,fill:false});
+
+  // Average line
+  const avgData=years.map(y=>{const vals=[];if(!tiHidden&&tiVals[y])vals.push(tiVals[y]);if(!gHidden&&gVals[y])vals.push(gVals[y]);return vals.length?vals.reduce((a,b)=>a+b)/vals.length:null;});
+  if(avgData.some(v=>v!==null))chartDatasets.push({label:'Average',data:avgData,borderColor:avgColor,backgroundColor:'transparent',borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:avgColor,tension:.3,spanGaps:true,fill:false});
+
+  charts.pc=new Chart(ctx,{type:'line',data:{labels:years,datasets:chartDatasets},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:10,padding:12}},title:{display:true,text:seg,font:{size:12},color:'#1A1033',padding:{bottom:8}}},
+      scales:{y:{ticks:{font:{size:10},callback:v=>`$${(v/1000).toFixed(1)}B`},grid:{color:'rgba(107,33,214,.06)'},border:{display:false}},x:{ticks:{font:{size:10}},grid:{display:false},border:{display:false}}}}});
+
+  // Table
+  let html=`<table class="dt"><thead><tr><th>Source</th>${years.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
+  if(!tiHidden&&Object.keys(tiVals).length)html+=`<tr><td><span class="src-dot" style="background:${tiColor}"></span>TechInsights</td>${years.map(y=>`<td>${tiVals[y]?'$'+(tiVals[y]/1000).toFixed(1)+'B':'—'}</td>`).join('')}</tr>`;
+  if(!gHidden&&Object.keys(gVals).length)html+=`<tr><td><span class="src-dot" style="background:${gColor}"></span>Gartner</td>${years.map(y=>`<td>${gVals[y]?'$'+(gVals[y]/1000).toFixed(1)+'B':'—'}</td>`).join('')}</tr>`;
+  const avgRow=avgData.map((v,i)=>v?'$'+(v/1000).toFixed(1)+'B':'—');
+  html+=`<tr style="font-weight:600;background:var(--bullbg)"><td><span class="src-dot" style="background:${avgColor}"></span>Average</td>${avgRow.map(v=>`<td>${v}</td>`).join('')}</tr>`;
+  html+='</tbody></table>';
+  document.getElementById('pc-table').innerHTML=html;
+}
+
+function togglePCSrc(src,el){
+  if(hidden.pc.has(src))hidden.pc.delete(src);else hidden.pc.add(src);
+  el.classList.toggle('off');drawPC();
+}
+
+/* ── DOWNLOADS ── */
+function downloadChart(cat){
+  const id=cat==='pc'?'pc':'wfe capex revenue'.includes(cat)?cat:cat;
+  const canvas=document.getElementById(`${id}-chart`);
+  const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download=`nova_${cat}.png`;a.click();
+}
+function downloadCSV(cat){
+  if(cat==='pc'){
+    const seg=document.getElementById('pcSegment').value;
+    const tiVals=pcData.ti[seg]||{};const gVals=pcData.gartner[seg]||{};
+    const years=[...new Set([...Object.keys(tiVals),...Object.keys(gVals)])].sort();
+    let csv=`Segment: ${seg}\nSource,${years.join(',')}\n`;
+    if(Object.keys(tiVals).length)csv+=`TechInsights,${years.map(y=>tiVals[y]||'').join(',')}\n`;
+    if(Object.keys(gVals).length)csv+=`Gartner,${years.map(y=>gVals[y]||'').join(',')}\n`;
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`nova_process_control.csv`;a.click();return;
+  }
+  const data=datasets[cat];const srcs=Object.keys(data).filter(s=>!hidden[cat].has(s));const years=getYears(cat);
+  let csv=`Source,${years.join(',')}\n`;srcs.forEach(s=>{csv+=`${s},${years.map(y=>data[s]&&data[s][y]||'').join(',')}\n`;});
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`nova_${cat}.csv`;a.click();
+}
+
+/* ── ANALYST CARDS ── */
+function buildAnalystCards(srcs,files){
+  const el=document.getElementById('aCards');
+  if(!srcs.size){el.innerHTML='<div class="na-msg">No sources</div>';return;}
+  el.innerHTML=[...srcs].sort().map(s=>{
+    const sf=files.filter(f=>guessSource(f.name)===s);
+    const latest=sf.sort((a,b)=>new Date(b.modifiedTime)-new Date(a.modifiedTime))[0];
+    const date=latest?new Date(latest.modifiedTime).toLocaleDateString('en-GB',{month:'short',year:'numeric'}):'—';
+    const stale=latest&&isStale(latest.modifiedTime);
+    const col=clr(s);
+    return`<div class="acard"><div class="ac-top"><span class="ac-name">${s}</span><span class="ac-dot" style="background:${col}"></span></div><div class="ac-spec">${SRC_SPEC[s]||'Research'}</div><div class="ac-date">${date}${stale?' <span class="stale-lbl">⚠ >6mo</span>':''}</div><div class="ac-sum">${sf.length} file${sf.length>1?'s':''}</div><div class="ac-stars">★★★★☆</div></div>`;
+  }).join('');
+}
+
+/* ── FILE LIST ── */
+function renderFileList(files){
+  document.getElementById('fileList').innerHTML=files.map(f=>{
+    const ext=(f.name.split('.').pop()||'').toLowerCase();const s=guessSource(f.name);
+    const date=f.modifiedTime?new Date(f.modifiedTime).toLocaleDateString('en-GB'):'';
+    const size=f.size?(f.size>1048576?(f.size/1048576).toFixed(1)+'MB':Math.round(f.size/1024)+'KB'):'';
+    const stale=isStale(f.modifiedTime);
+    const bc=['xlsx','xlsm','xls'].includes(ext)?'#ECFDF5;color:#065F46':ext==='pptx'?'#FEF3C7;color:#92400E':'#F5F0FF;color:#6B21D6';
+    const ic=['xlsx','xlsm','xls'].includes(ext)?'ti-file-spreadsheet':ext==='pptx'?'ti-presentation':'ti-file';
+    return`<div style="background:${stale?'#FEF2F2':'var(--bg)'};border-radius:var(--r6);padding:9px 11px;display:flex;align-items:flex-start;gap:9px;border:1px solid ${stale?'rgba(220,38,38,.15)':'transparent'};"><i class="ti ${ic}" style="font-size:16px;color:${stale?'var(--bear)':'var(--p)'};flex-shrink:0;"></i><div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${stale?'color:var(--t3);text-decoration:line-through;':''}" title="${f.name}">${f.name}</div><div style="font-size:10px;color:var(--t3);margin-top:1px;">${s} · ${date}${size?' · '+size:''}${stale?' · <span style="color:var(--bear);font-weight:600;">excluded (>6mo)</span>':''}</div><span style="font-size:9px;padding:2px 6px;border-radius:3px;font-weight:600;margin-top:4px;display:inline-block;background:${bc}">${ext.toUpperCase()}</span></div></div>`;
+  }).join('');
+}
+
+/* ── TAKEAWAYS ── */
+async function generateTakeaways(){
+  if(!allFiles.length){document.getElementById('twList').innerHTML='<div class="na-msg">No files indexed yet.</div>';return;}
+  // Only use files from last 6 months
+  const recentFiles=allFiles.filter(f=>!isVeryStale(f.modifiedTime));
+  if(!recentFiles.length){document.getElementById('twList').innerHTML='<div class="na-msg">All indexed files are older than 6 months and excluded from analysis.</div>';return;}
+  document.getElementById('twList').innerHTML='<div class="na-msg"><i class="ti ti-loader spin"></i> Generating takeaways from recent reports...</div>';
+  const flist=recentFiles.slice(0,20).map(f=>`${f.name} [${guessSource(f.name)}] (${new Date(f.modifiedTime).toLocaleDateString('en-GB')})`).join('\n');
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:'You are Nova Measuring Instruments market intelligence engine. Generate exactly 5 executive takeaways from RECENT reports only (last 6 months). Focus on current and forward-looking insights. Rules: 1 sentence max 25 words. Sort by Nova relevance. Include source name and a plausible report URL or Drive link hint in brackets. Respond ONLY with JSON array [{text,score,src,url}] score=3/4/5. No markdown.',
+        messages:[{role:'user',content:`Recent files (last 6 months):\n${flist}\n\nGenerate 5 forward-looking executive takeaways.`}]})});
+    const d=await r.json();const raw=d.content?.find(b=>b.type==='text')?.text||'[]';
+    let items;try{items=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch{items=null;}
+    if(!items?.length){document.getElementById('twList').innerHTML='<div class="na-msg">Could not generate takeaways.</div>';return;}
+    document.getElementById('twList').innerHTML=items.map(t=>{
+      const cls=t.score===5?'s5':t.score===4?'s4':'s3';
+      const srcEl=t.url?`<a href="${t.url}" target="_blank" class="stag-link">${t.src||'Source'} ↗</a>`:`<span class="stag">${t.src||''}</span>`;
+      return`<div class="tw-row"><span class="tw-arr">▶</span><span class="tw-txt">${t.text}</span><div class="tw-tags"><span class="sbadge ${cls}">Score ${t.score}</span>${srcEl}</div></div>`;
+    }).join('');
+  }catch(e){document.getElementById('twList').innerHTML='<div class="na-msg">Error generating takeaways.</div>';}
+}
+
+/* ── COPILOT ── */
+const CHIPS={general:['WFE forecast 2025?','Most bullish source?','Biggest trend?'],nova:['Nova implications?','Advanced packaging demand?','Process control trends?'],sales:['Talking points for TSMC?','AI packaging narrative?','Position vs KLA?'],risk:['Key risks 2025?','China WFE risk?','Memory uncertainty?'],compare:['Compare all sources on WFE?','Most bullish on packaging?','Biggest disagreements?']};
+const MODEPR={general:'Answer directly based on available reports.',nova:'Focus on implications for Nova: optical metrology, process control, packaging inspection.',sales:'Provide talking points for Nova sales engineers.',risk:'Focus on risks. Rank by severity.',compare:'Compare sources. Highlight agreements and disagreements.'};
+function setMode(m,btn){qaMode=m;document.querySelectorAll('.mt').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.getElementById('chips').innerHTML=(CHIPS[m]||[]).map(q=>`<span class="chip" onclick="document.getElementById('qaIn').value='${q}'">${q}</span>`).join('');}
+window.addEventListener('DOMContentLoaded',()=>{document.getElementById('chips').innerHTML=(CHIPS.general||[]).map(q=>`<span class="chip" onclick="document.getElementById('qaIn').value='${q}'">${q}</span>`).join('');});
+async function askQ(){
+  const q=document.getElementById('qaIn').value.trim();if(!q)return;
+  const out=document.getElementById('qaOut');out.innerHTML='<div class="qa-ans"><i class="ti ti-loader spin"></i> Analyzing...</div>';
+  const recentFiles=allFiles.filter(f=>!isVeryStale(f.modifiedTime));
+  const flist=(recentFiles.length?recentFiles:allFiles).slice(0,20).map(f=>`${f.name} [${guessSource(f.name)}]`).join('\n');
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:`Nova Measuring Instruments market intelligence. ${MODEPR[qaMode]||''} Prioritize recent reports. Cite sources. Be concise.`,
+        messages:[{role:'user',content:`Reports:\n${flist}\n\nQuestion: ${q}`}]})});
+    const d=await r.json();const text=d.content?.find(b=>b.type==='text')?.text||'No answer.';
+    const srcs=[...new Set(allFiles.map(f=>guessSource(f.name)))].join(', ');
+    out.innerHTML=`<div class="qa-ans">${text.replace(/\n/g,'<br>')}<div class="qa-src">Sources: ${srcs}</div></div>`;
+  }catch(e){out.innerHTML='<div class="qa-ans">Connection error.</div>';}
+}
+
+/* ── MISC ── */
+function showCat(cat,tab){document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.cat-panel').forEach(p=>p.classList.remove('active'));tab.classList.add('active');document.getElementById(`panel-${cat}`).classList.add('active');}
+function prog(show,label,pct){document.getElementById('progWrap').style.display=show?'block':'none';if(show){document.getElementById('progLbl').textContent=label;document.getElementById('progBar').style.width=pct+'%';}}
+function doSync(){if(!tok){initiateAuth();return;}loadFiles();}
 </script>
 </body>
 </html>
