@@ -1004,7 +1004,8 @@ async function loadNovaFeed(forceRefresh){
         messages:[{role:'user',content:`Recent filings:\n${filingSummary}\n\nGenerate 6 Nova-relevant insights.`}]})});
     const d=await r.json();
     const raw=d.content?.find(b=>b.type==='text')?.text||'[]';
-    let insights; try{insights=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch{insights=null;}
+    console.log('RAW NOVA FEED:',raw.substring(0,500));
+    let insights; try{insights=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch(e){console.log('PARSE ERROR:',e.message,raw.substring(0,200));insights=null;}
     if(!insights?.length){el.innerHTML='<div class="ms-err">Could not parse AI response. Try refreshing.</div>';return;}
     try{localStorage.setItem(MS_CACHE_KEY,JSON.stringify({ts:Date.now(),insights}));}catch{}
     noteEl.textContent=`Updated ${new Date().toLocaleDateString('en-GB')}`;
