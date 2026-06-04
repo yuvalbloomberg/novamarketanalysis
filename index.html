@@ -192,6 +192,60 @@ table.mt tr:last-child td{border-bottom:none;}
 .spin{animation:spin .8s linear infinite;display:inline-block;}
 footer{text-align:center;padding:14px;font-size:11px;color:var(--t3);border-top:1px solid var(--b1);margin-top:4px;}
 footer em{color:var(--p);font-style:normal;}
+
+/* MARKET SIGNALS TAB */
+.ms-feed{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.ms-insight{display:flex;gap:12px;padding:12px 14px;background:var(--w);border:1px solid var(--b1);border-radius:var(--r10);transition:border-color .15s;}
+.ms-insight:hover{border-color:var(--pb);}
+.ms-insight.nova-high{border-left:3px solid var(--p);background:var(--pdim);}
+.ms-insight.nova-med{border-left:3px solid #A855F7;}
+.ms-insight.nova-low{border-left:3px solid var(--b2);}
+.ms-score{width:28px;height:28px;border-radius:50%;background:var(--grad);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.ms-score.med{background:linear-gradient(135deg,#A855F7,#7C3AED);}
+.ms-score.low{background:var(--b2);color:var(--t2);}
+.ms-body{flex:1;}
+.ms-text{font-size:12px;line-height:1.6;color:var(--t1);margin-bottom:6px;}
+.ms-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.ms-company{font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;background:var(--nova-navy);color:#fff;letter-spacing:.04em;}
+.ms-company.competitor{background:#374151;}
+.ms-company.customer{background:#0A4D2E;color:#34D399;}
+.ms-src{font-size:9px;color:var(--t3);padding:2px 7px;border:1px solid var(--b1);border-radius:3px;}
+.ms-date{font-size:9px;color:var(--t4);}
+.ms-relevance{font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;}
+.ms-relevance.high{background:var(--pbg);color:var(--p);}
+.ms-relevance.med{background:#EDE9FF;color:#5B21B6;}
+.ms-relevance.low{background:var(--bg);color:var(--t3);}
+
+/* COMPANY SELECTOR */
+.co-grid{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.co-btn{font-size:10px;padding:4px 10px;border-radius:var(--r6);border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;font-weight:500;transition:all .12s;}
+.co-btn:hover{border-color:var(--pb);color:var(--p);}
+.co-btn.active{background:var(--grad);border-color:transparent;color:#fff;}
+.co-btn.customer{border-color:rgba(5,150,105,.3);color:#065F46;}
+.co-btn.customer.active{background:linear-gradient(135deg,#059669,#34D399);border-color:transparent;color:#fff;}
+.co-btn.competitor{border-color:rgba(220,38,38,.25);color:#991B1B;}
+.co-btn.competitor.active{background:linear-gradient(135deg,#DC2626,#F87171);border-color:transparent;color:#fff;}
+
+/* COMPANY DETAIL */
+.co-detail{background:var(--w);border:1px solid var(--b1);border-radius:var(--r14);padding:14px 16px;}
+.co-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.co-detail-name{font-size:15px;font-weight:700;color:var(--t1);}
+.co-detail-type{font-size:9px;font-weight:600;padding:3px 9px;border-radius:99px;margin-left:8px;}
+.co-detail-type.customer{background:var(--bullbg);color:var(--bull);border:1px solid rgba(5,150,105,.2);}
+.co-detail-type.competitor{background:var(--bearbg);color:var(--bear);border:1px solid rgba(220,38,38,.15);}
+.co-filing-row{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);font-size:11px;align-items:flex-start;}
+.co-filing-row:last-child{border-bottom:none;}
+.co-filing-type{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;background:var(--pdim);color:var(--p);flex-shrink:0;margin-top:1px;}
+.co-filing-quote{flex:1;line-height:1.6;color:var(--t1);}
+.co-filing-meta{font-size:10px;color:var(--t3);flex-shrink:0;white-space:nowrap;}
+.ms-loading{text-align:center;padding:32px;color:var(--t3);font-size:12px;}
+.ms-err{font-size:11px;color:var(--bear);background:var(--bearbg);border:1px solid rgba(220,38,38,.15);border-radius:var(--r6);padding:10px 14px;}
+.co-legend{display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+.co-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2);}
+.co-legend-dot{width:8px;height:8px;border-radius:50%;}
+.ms-refresh-btn{font-size:10px;padding:4px 10px;border-radius:var(--r6);border:1px solid var(--b2);background:var(--w);color:var(--t2);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;}
+.ms-refresh-btn:hover{background:var(--pdim);color:var(--p);}
+.cache-note{font-size:9px;color:var(--t4);font-style:italic;}
 </style>
 </head>
 <body>
@@ -263,6 +317,10 @@ footer em{color:var(--p);font-style:normal;}
     <div class="cat-tab" onclick="showCat('processcontrol',this)">
       <div class="ct-icon"><i class="ti ti-microscope"></i></div>
       <div class="ct-name">Process Control</div><div class="ct-sub">Gartner & TechInsights</div>
+    </div>
+    <div class="cat-tab" onclick="showCat('marketsignals',this)">
+      <div class="ct-icon"><i class="ti ti-antenna-bars-5"></i></div>
+      <div class="ct-name">Market Signals</div><div class="ct-sub">EDGAR · Live Intel</div>
     </div>
   </div>
 
@@ -339,6 +397,33 @@ footer em{color:var(--p);font-style:normal;}
       <div class="chart-wrap"><canvas id="pc-chart"></canvas></div>
       <div class="dt-wrap" id="pc-table"><div class="na-msg">Process Control data will appear after syncing files from Gartner and TechInsights.</div></div>
     </div>
+  </div>
+
+
+  <!-- MARKET SIGNALS PANEL -->
+  <div class="cat-panel" id="panel-marketsignals">
+
+    <div class="panel accent">
+      <div class="ph">
+        <div class="ph-l"><i class="ti ti-sparkles"></i> Nova Relevance Feed <span style="font-size:10px;color:var(--t3);font-weight:400;margin-left:6px;">— ranked by Nova impact</span></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="cache-note" id="feedCacheNote"></span>
+          <button class="ms-refresh-btn" onclick="loadNovaFeed(true)"><i class="ti ti-refresh"></i> Refresh</button>
+        </div>
+      </div>
+      <div id="novaFeed"><div class="ms-loading">Select this tab to load live intelligence from SEC EDGAR...</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-l"><i class="ti ti-building-factory-2"></i> Company Deep Dive</div></div>
+      <div class="co-legend">
+        <div class="co-legend-item"><div class="co-legend-dot" style="background:#059669"></div>Nova customer</div>
+        <div class="co-legend-item"><div class="co-legend-dot" style="background:#DC2626"></div>Competitor</div>
+      </div>
+      <div class="co-grid" id="coGrid"></div>
+      <div id="coDetail"><div class="na-msg">Select a company for details</div></div>
+    </div>
+
   </div>
 
   <!-- DIVIDER -->
@@ -799,9 +884,186 @@ async function askQ(){
 }
 
 /* ── MISC ── */
-function showCat(cat,tab){document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.cat-panel').forEach(p=>p.classList.remove('active'));tab.classList.add('active');document.getElementById(`panel-${cat}`).classList.add('active');}
+function showCat(cat,tab){document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.cat-panel').forEach(p=>p.classList.remove('active'));tab.classList.add('active');document.getElementById('panel-'+cat).classList.add('active');if(cat==='marketsignals'&&typeof initMarketSignals==='function')initMarketSignals();}
 function prog(show,label,pct){document.getElementById('progWrap').style.display=show?'block':'none';if(show){document.getElementById('progLbl').textContent=label;document.getElementById('progBar').style.width=pct+'%';}}
 function doSync(){if(!tok){initiateAuth();return;}loadFiles();}
 </script>
 </body>
 </html>
+<script>
+/* ══════════════════════════════════════════════
+   MARKET SIGNALS — EDGAR + Claude API
+══════════════════════════════════════════════ */
+
+const MS_COMPANIES=[
+  {ticker:'TSM', name:'TSMC',               type:'customer',  cik:'0001046179'},
+  {ticker:'INTC',name:'Intel',              type:'customer',  cik:'0000050863'},
+  {ticker:'MU',  name:'Micron',             type:'customer',  cik:'0000723125'},
+  {ticker:'QCOM',name:'Qualcomm',           type:'customer',  cik:'0000804328'},
+  {ticker:'NVDA',name:'Nvidia',             type:'customer',  cik:'0001045810'},
+  {ticker:'SSNLF',name:'Samsung',           type:'customer',  cik:null,note:'KRX listed'},
+  {ticker:'HXSCL',name:'SK Hynix',          type:'customer',  cik:null,note:'KRX listed'},
+  {ticker:'AMAT',name:'Applied Materials',  type:'competitor',cik:'0000796343'},
+  {ticker:'KLAC',name:'KLA',                type:'competitor',cik:'0000319201'},
+  {ticker:'ONTO',name:'Onto Innovation',    type:'competitor',cik:'0001113232'},
+  {ticker:'TER', name:'Teradyne',           type:'competitor',cik:'0000097210'},
+  {ticker:'HTHIY',name:'Hitachi HR',        type:'competitor',cik:null,note:'Tokyo listed'},
+];
+
+const MS_CACHE_KEY='nova_ms_cache_v1';
+const MS_CACHE_TTL=24*60*60*1000;
+const ANGLE_ICON={capex:'ti-chart-bar',metrology:'ti-microscope',packaging:'ti-box',competitive:'ti-swords',risk:'ti-alert-triangle',technology:'ti-cpu'};
+const ANGLE_COLOR={capex:'#059669',metrology:'#6B21D6',packaging:'#D97706',competitive:'#DC2626',risk:'#B45309',technology:'#2D6BA0'};
+let msInited=false;
+
+/* ── INIT ── */
+function initMarketSignals(){
+  if(msInited)return; msInited=true;
+  buildCoGrid(); loadNovaFeed(false);
+}
+
+function buildCoGrid(){
+  document.getElementById('coGrid').innerHTML=MS_COMPANIES.map(c=>
+    `<button class="co-btn ${c.type}" onclick="loadCompanyDetail('${c.ticker}')">${c.ticker}<br><span style="font-size:8px;opacity:.8">${c.name}</span></button>`
+  ).join('');
+}
+
+/* ── EDGAR ── */
+async function edgarFetch(cik,forms,count){
+  if(!cik)return[];
+  const padded=String(parseInt(cik)).padStart(10,'0');
+  try{
+    const r=await fetch(`https://data.sec.gov/submissions/CIK${padded}.json`,{headers:{'User-Agent':'Nova Market Intelligence nova@nova.com'}});
+    if(!r.ok)return[];
+    const d=await r.json();
+    const f=d.filings?.recent; if(!f)return[];
+    const out=[];
+    for(let i=0;i<f.form?.length&&out.length<count*2;i++){
+      if(forms.includes(f.form[i]))out.push({form:f.form[i],date:f.filingDate[i],accession:f.accessionNumber[i],description:f.primaryDocument[i]||'',cik:padded});
+    }
+    return out.slice(0,count);
+  }catch{return[];}
+}
+
+async function fetchFilingText(cik,accession,doc){
+  const acc=accession.replace(/-/g,'');
+  try{
+    const r=await fetch(`https://www.sec.gov/Archives/edgar/data/${parseInt(cik)}/${acc}/${doc}`,{headers:{'User-Agent':'Nova Market Intelligence nova@nova.com'}});
+    if(!r.ok)return null;
+    return(await r.text()).replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').substring(0,4000);
+  }catch{return null;}
+}
+
+/* ── NOVA FEED ── */
+async function loadNovaFeed(forceRefresh){
+  const el=document.getElementById('novaFeed');
+  const noteEl=document.getElementById('feedCacheNote');
+  if(!forceRefresh){
+    try{
+      const c=JSON.parse(localStorage.getItem(MS_CACHE_KEY)||'null');
+      if(c&&(Date.now()-c.ts)<MS_CACHE_TTL){renderNovaFeed(c.insights);noteEl.textContent=`Cached ${new Date(c.ts).toLocaleDateString('en-GB')}`;return;}
+    }catch{}
+  }
+  el.innerHTML='<div class="ms-loading"><i class="ti ti-loader spin"></i> Fetching SEC EDGAR filings...</div>';
+  noteEl.textContent='';
+  const usCos=MS_COMPANIES.filter(c=>c.cik);
+  let allFilings=[];
+  for(const co of usCos.slice(0,7)){
+    const filings=await edgarFetch(co.cik,['8-K','10-Q','20-F'],2);
+    filings.forEach(f=>allFilings.push({...f,company:co.name,ticker:co.ticker,coType:co.type}));
+    await new Promise(r=>setTimeout(r,250));
+  }
+  if(!allFilings.length){el.innerHTML='<div class="ms-err"><i class="ti ti-alert-triangle"></i> Could not reach SEC EDGAR. Check network.</div>';return;}
+  el.innerHTML='<div class="ms-loading"><i class="ti ti-loader spin"></i> Analyzing with Claude AI...</div>';
+  const filingSummary=allFilings.slice(0,15).map(f=>`${f.company} (${f.ticker}, ${f.coType}) — ${f.form} filed ${f.date}`).join('\n');
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,
+        system:'You are Nova Ltd. (Israeli semiconductor metrology — optical CD, overlay, film) market intelligence. Given recent SEC filings from customers and competitors, generate 6 insights ranked by Nova relevance. Nova cares about: capex guidance, process control spending, node transitions, packaging trends, competitive moves. Rules: each insight max 30 words, forward-looking. Score 5=critical,4=important,3=watch. Respond ONLY with JSON array: [{text,score,company,ticker,coType,form,date,angle}] angle=capex|metrology|packaging|competitive|risk|technology. No markdown.',
+        messages:[{role:'user',content:`Recent filings:\n${filingSummary}\n\nGenerate 6 Nova-relevant insights.`}]})});
+    const d=await r.json();
+    const raw=d.content?.find(b=>b.type==='text')?.text||'[]';
+    let insights; try{insights=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch{insights=null;}
+    if(!insights?.length){el.innerHTML='<div class="ms-err">Could not parse AI response. Try refreshing.</div>';return;}
+    try{localStorage.setItem(MS_CACHE_KEY,JSON.stringify({ts:Date.now(),insights}));}catch{}
+    noteEl.textContent=`Updated ${new Date().toLocaleDateString('en-GB')}`;
+    renderNovaFeed(insights);
+  }catch(e){el.innerHTML=`<div class="ms-err"><i class="ti ti-alert-triangle"></i> Error: ${e.message}</div>`;}
+}
+
+function renderNovaFeed(insights){
+  const el=document.getElementById('novaFeed');
+  if(!insights?.length){el.innerHTML='<div class="na-msg">No insights.</div>';return;}
+  const sorted=[...insights].sort((a,b)=>b.score-a.score);
+  el.innerHTML=`<div class="ms-feed">${sorted.map(ins=>{
+    const lvl=ins.score===5?'nova-high':ins.score===4?'nova-med':'nova-low';
+    const scoreBg=ins.score===5?'background:var(--grad)':ins.score===4?'background:linear-gradient(135deg,#A855F7,#7C3AED)':'background:var(--b2);color:var(--t2)';
+    const icon=ANGLE_ICON[ins.angle]||'ti-trending-up';
+    const col=ANGLE_COLOR[ins.angle]||'#6B21D6';
+    const cotypeCls=ins.coType==='customer'?'customer':'competitor';
+    const relCls=ins.score===5?'high':ins.score===4?'med':'low';
+    return`<div class="ms-insight ${lvl}">
+      <div class="ms-score" style="${scoreBg}">${ins.score}</div>
+      <div class="ms-body">
+        <div class="ms-text"><i class="ti ${icon}" style="color:${col};margin-right:4px;font-size:11px;"></i>${ins.text}</div>
+        <div class="ms-meta">
+          <span class="ms-company ${cotypeCls}">${ins.ticker||ins.company}</span>
+          <span class="ms-src">${ins.form||'Filing'}</span>
+          <span class="ms-date">${ins.date||''}</span>
+          <span class="ms-relevance ${relCls}">${ins.angle||''}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* ── COMPANY DEEP DIVE ── */
+async function loadCompanyDetail(ticker){
+  document.querySelectorAll('.co-btn').forEach(b=>{b.classList.remove('active');if(b.textContent.trim().startsWith(ticker))b.classList.add('active');});
+  const co=MS_COMPANIES.find(c=>c.ticker===ticker);
+  const el=document.getElementById('coDetail');
+  if(!co.cik){
+    el.innerHTML=`<div class="co-detail"><div class="co-detail-header"><span class="co-detail-name">${co.name}</span><span class="co-detail-type ${co.type}" style="margin-left:8px;">${co.type}</span></div><div class="na-msg">${co.note||'No EDGAR data'}</div></div>`;
+    return;
+  }
+  el.innerHTML=`<div class="co-detail"><div class="ms-loading"><i class="ti ti-loader spin"></i> Loading ${co.name} filings...</div></div>`;
+  const filings=await edgarFetch(co.cik,['8-K','10-Q','20-F','10-K'],5);
+  if(!filings.length){el.innerHTML=`<div class="co-detail"><div class="ms-err">No recent filings for ${co.name}.</div></div>`;return;}
+  el.innerHTML=`<div class="co-detail"><div class="ms-loading"><i class="ti ti-loader spin"></i> Analyzing with Claude...</div></div>`;
+  const latest=filings[0];
+  let filingText=null;
+  if(latest.description)filingText=await fetchFilingText(latest.cik,latest.accession,latest.description);
+  const filingList=filings.map(f=>`${f.form} — ${f.date}`).join('\n');
+  const contextBlock=filingText?`\nLatest filing excerpt (${latest.form}, ${latest.date}):\n${filingText}`:'\nNo filing text available.';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,
+        system:`You are Nova Ltd. market intelligence. Analyze SEC filings for ${co.name} (${co.type} of Nova). Extract 4 key points relevant to Nova: capex, metrology/process control mentions, technology roadmap, competitive signals. Respond ONLY with JSON: {summary:string(2 sentences),points:[{type,text,novaAngle}]} type=capex|metrology|technology|risk|competitive novaAngle=how this affects Nova (1 sentence). No markdown.`,
+        messages:[{role:'user',content:`Company: ${co.name}\nFilings:\n${filingList}${contextBlock}\n\nExtract Nova intelligence.`}]})});
+    const d=await r.json();
+    const raw=d.content?.find(b=>b.type==='text')?.text||'{}';
+    let result; try{result=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch{result=null;}
+    if(!result){el.innerHTML=`<div class="co-detail"><div class="ms-err">Could not parse response.</div></div>`;return;}
+    const cotypeCls=co.type==='customer'?'customer':'competitor';
+    el.innerHTML=`<div class="co-detail">
+      <div class="co-detail-header">
+        <div><span class="co-detail-name">${co.name}</span><span class="co-detail-type ${cotypeCls}" style="margin-left:8px;">${co.type}</span></div>
+        <span style="font-size:10px;color:var(--t3);">${filings.length} filings found</span>
+      </div>
+      <div style="font-size:12px;line-height:1.7;color:var(--t2);margin-bottom:12px;padding:10px 12px;background:var(--bg);border-radius:var(--r6);">${result.summary||''}</div>
+      ${(result.points||[]).map(p=>{
+        const icon=ANGLE_ICON[p.type]||'ti-trending-up';
+        const col=ANGLE_COLOR[p.type]||'#6B21D6';
+        return`<div class="co-filing-row">
+          <span class="co-filing-type"><i class="ti ${icon}" style="color:${col}"></i> ${p.type}</span>
+          <div class="co-filing-quote">${p.text}<div style="font-size:10px;color:var(--p);margin-top:4px;font-style:italic;">→ ${p.novaAngle}</div></div>
+          <div class="co-filing-meta">${latest.date}</div>
+        </div>`;
+      }).join('')}
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--b1);font-size:10px;color:var(--t3);">
+        Filings: ${filings.map(f=>`<a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${co.cik}&type=${f.form}" target="_blank" style="color:var(--p);text-decoration:none;">${f.form} ${f.date}</a>`).join(' · ')}
+      </div>
+    </div>`;
+  }catch(e){el.innerHTML=`<div class="co-detail"><div class="ms-err">Error: ${e.message}</div></div>`;}
+}
+</script>
