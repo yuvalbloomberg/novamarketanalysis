@@ -847,7 +847,7 @@ async function generateTakeaways(){
   document.getElementById('twList').innerHTML='<div class="na-msg"><i class="ti ti-loader spin"></i> Generating takeaways from recent reports...</div>';
   const flist=recentFiles.slice(0,20).map(f=>`${f.name} [${guessSource(f.name)}] (${new Date(f.modifiedTime).toLocaleDateString('en-GB')})`).join('\n');
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+    const r=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
         system:'You are Nova Measuring Instruments market intelligence engine. Generate exactly 5 executive takeaways from RECENT reports only (last 6 months). Focus on current and forward-looking insights. Rules: 1 sentence max 25 words. Sort by Nova relevance. Include source name and a plausible report URL or Drive link hint in brackets. Respond ONLY with JSON array [{text,score,src,url}] score=3/4/5. No markdown.',
         messages:[{role:'user',content:`Recent files (last 6 months):\n${flist}\n\nGenerate 5 forward-looking executive takeaways.`}]})});
@@ -873,7 +873,7 @@ async function askQ(){
   const recentFiles=allFiles.filter(f=>!isVeryStale(f.modifiedTime));
   const flist=(recentFiles.length?recentFiles:allFiles).slice(0,20).map(f=>`${f.name} [${guessSource(f.name)}]`).join('\n');
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+    const r=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
         system:`Nova Measuring Instruments market intelligence. ${MODEPR[qaMode]||''} Prioritize recent reports. Cite sources. Be concise.`,
         messages:[{role:'user',content:`Reports:\n${flist}\n\nQuestion: ${q}`}]})});
@@ -912,6 +912,7 @@ const MS_COMPANIES=[
 
 const MS_CACHE_KEY='nova_ms_cache_v1';
 const MS_CACHE_TTL=24*60*60*1000;
+const WORKER_URL='https://nova-proxy.yuvalbloomberg.workers.dev';
 const ANGLE_ICON={capex:'ti-chart-bar',metrology:'ti-microscope',packaging:'ti-box',competitive:'ti-swords',risk:'ti-alert-triangle',technology:'ti-cpu'};
 const ANGLE_COLOR={capex:'#059669',metrology:'#6B21D6',packaging:'#D97706',competitive:'#DC2626',risk:'#B45309',technology:'#2D6BA0'};
 let msInited=false;
@@ -929,11 +930,11 @@ function buildCoGrid(){
 }
 
 /* ── FINNHUB ── */
-const FINNHUB_KEY='d8glt5hr01qlgcukc6n0d8glt5hr01qlgcukc6ng';
+// API keys stored securely in Cloudflare Worker
 
 async function finnhubFetch(path){
   try{
-    const r=await fetch(`https://finnhub.io/api/v1${path}&token=${FINNHUB_KEY}`);
+    const r=await fetch(`${WORKER_URL}/finnhub?path=${encodeURIComponent(path)}`);
     if(!r.ok)return null;
     return await r.json();
   }catch{return null;}
@@ -997,7 +998,7 @@ async function loadNovaFeed(forceRefresh){
   el.innerHTML='<div class="ms-loading"><i class="ti ti-loader spin"></i> Analyzing with Claude AI...</div>';
   const filingSummary=allFilings.slice(0,15).map(f=>`${f.company} (${f.ticker}, ${f.coType}) — ${f.form} ${f.date}${f.summary?" | "+f.summary:""}`).join('\n');
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+    const r=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,
         system:'You are Nova Ltd. (Israeli semiconductor metrology — optical CD, overlay, film) market intelligence. Given recent SEC filings from customers and competitors, generate 6 insights ranked by Nova relevance. Nova cares about: capex guidance, process control spending, node transitions, packaging trends, competitive moves. Rules: each insight max 30 words, forward-looking. Score 5=critical,4=important,3=watch. Respond ONLY with JSON array: [{text,score,company,ticker,coType,form,date,angle}] angle=capex|metrology|packaging|competitive|risk|technology. No markdown.',
         messages:[{role:'user',content:`Recent filings:\n${filingSummary}\n\nGenerate 6 Nova-relevant insights.`}]})});
@@ -1056,7 +1057,7 @@ async function loadCompanyDetail(ticker){
   const filingList=filings.map(f=>`${f.form} — ${f.date}`).join('\n');
   const contextBlock=filingText?`\nLatest filing excerpt (${latest.form}, ${latest.date}):\n${filingText}`:'\nNo filing text available.';
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+    const r=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,
         system:`You are Nova Ltd. market intelligence. Analyze SEC filings for ${co.name} (${co.type} of Nova). Extract 4 key points relevant to Nova: capex, metrology/process control mentions, technology roadmap, competitive signals. Respond ONLY with JSON: {summary:string(2 sentences),points:[{type,text,novaAngle}]} type=capex|metrology|technology|risk|competitive novaAngle=how this affects Nova (1 sentence). No markdown.`,
         messages:[{role:'user',content:`Company: ${co.name}\nFilings:\n${filingList}${contextBlock}\n\nExtract Nova intelligence.`}]})});
