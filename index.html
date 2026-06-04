@@ -933,7 +933,7 @@ async function edgarFetch(cik,forms,count){
   if(!cik)return[];
   const padded=String(parseInt(cik)).padStart(10,'0');
   try{
-    const r=await fetch(`https://data.sec.gov/submissions/CIK${padded}.json`,{headers:{'User-Agent':'Nova Market Intelligence nova@nova.com'}});
+    const r=await fetch(`https://corsproxy.io/?url=${encodeURIComponent('https://data.sec.gov/submissions/CIK'+padded+'.json')}`);
     if(!r.ok)return[];
     const d=await r.json();
     const f=d.filings?.recent; if(!f)return[];
@@ -948,7 +948,7 @@ async function edgarFetch(cik,forms,count){
 async function fetchFilingText(cik,accession,doc){
   const acc=accession.replace(/-/g,'');
   try{
-    const r=await fetch(`https://www.sec.gov/Archives/edgar/data/${parseInt(cik)}/${acc}/${doc}`,{headers:{'User-Agent':'Nova Market Intelligence nova@nova.com'}});
+    const r=await fetch(`https://corsproxy.io/?url=${encodeURIComponent('https://www.sec.gov/Archives/edgar/data/'+parseInt(cik)+'/'+acc+'/'+doc)}`);
     if(!r.ok)return null;
     return(await r.text()).replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').substring(0,4000);
   }catch{return null;}
