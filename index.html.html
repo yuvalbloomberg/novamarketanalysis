@@ -937,25 +937,28 @@ async function finnhubFetch(path){
 }
 
 async function edgarFetch(ticker,forms,count){
-  // Get company filings via Finnhub
   try{
     const [news,earnings]=await Promise.all([
-      finnhubFetch(`/company-news?symbol=${ticker}&from=${getFromDate(90)}&to=${getToDate()}`),
+      finnhubFetch(`/company-news?symbol=${ticker}&from=${getFromDate(180)}&to=${getToDate()}`),
       finnhubFetch(`/stock/earnings?symbol=${ticker}&limit=4`)
     ]);
     const out=[];
     if(earnings?.length){
       earnings.slice(0,count).forEach(e=>{
-        out.push({form:'Earnings',date:e.date||e.period,accession:'',description:'',summary:`EPS actual: ${e.actual??'—'}, estimate: ${e.estimate??'—'}, revenue: ${e.revenue??'—'}`});
+        const date=e.date||e.period||'';
+        const rev=e.revenue?`$${(e.revenue/1e9).toFixed(1)}B`:'N/A';
+        out.push({form:'Earnings',date,accession:'',description:'',
+          summary:`Q${e.quarter||'?'} ${e.year||''}: EPS ${e.actual??'—'} vs est ${e.estimate??'—'} (surprise ${e.surprisePercent!=null?e.surprisePercent.toFixed(1)+'%':'N/A'}), revenue ${rev}`});
       });
     }
     if(news?.length){
-      news.slice(0,3).forEach(n=>{
-        out.push({form:'News',date:new Date(n.datetime*1000).toISOString().split('T')[0],accession:'',description:n.url||'',summary:n.headline});
+      news.slice(0,2).forEach(n=>{
+        out.push({form:'News',date:new Date(n.datetime*1000).toISOString().split('T')[0],
+          accession:'',description:n.url||'',summary:n.headline});
       });
     }
-    return out.slice(0,count+2);
-  }catch{return[];}
+    return out.slice(0,count+3);
+  }catch(e){console.log('edgarFetch error',ticker,e);return[];}
 }
 
 async function fetchFilingText(ticker){
