@@ -500,6 +500,7 @@ footer em{color:var(--p);font-style:normal;}
 const CLIENT_ID='828139804659-dcg8dep3ihbmn4sgiu5js4kndp8kf1o3.apps.googleusercontent.com';
 const FOLDER='Nova_Market_Intelligence';
 const STALE_MONTHS=6;
+const WORKER_URL='https://nova-proxy.yuvalbloomberg.workers.dev';
 
 /* ── PROCESS CONTROL SEGMENTS ── */
 const PC_SEGMENTS_TI={
@@ -887,10 +888,6 @@ async function askQ(){
 function showCat(cat,tab){document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.cat-panel').forEach(p=>p.classList.remove('active'));tab.classList.add('active');document.getElementById('panel-'+cat).classList.add('active');if(cat==='marketsignals'&&typeof initMarketSignals==='function')initMarketSignals();}
 function prog(show,label,pct){document.getElementById('progWrap').style.display=show?'block':'none';if(show){document.getElementById('progLbl').textContent=label;document.getElementById('progBar').style.width=pct+'%';}}
 function doSync(){if(!tok){initiateAuth();return;}loadFiles();}
-</script>
-</body>
-</html>
-<script>
 /* ══════════════════════════════════════════════
    MARKET SIGNALS — EDGAR + Claude API
 ══════════════════════════════════════════════ */
@@ -912,7 +909,6 @@ const MS_COMPANIES=[
 
 const MS_CACHE_KEY='nova_ms_cache_v1';
 const MS_CACHE_TTL=24*60*60*1000;
-const WORKER_URL='https://nova-proxy.yuvalbloomberg.workers.dev';
 const ANGLE_ICON={capex:'ti-chart-bar',metrology:'ti-microscope',packaging:'ti-box',competitive:'ti-swords',risk:'ti-alert-triangle',technology:'ti-cpu'};
 const ANGLE_COLOR={capex:'#059669',metrology:'#6B21D6',packaging:'#D97706',competitive:'#DC2626',risk:'#B45309',technology:'#2D6BA0'};
 let msInited=false;
@@ -941,25 +937,28 @@ async function finnhubFetch(path){
 }
 
 async function edgarFetch(ticker,forms,count){
-  // Get company filings via Finnhub
   try{
     const [news,earnings]=await Promise.all([
-      finnhubFetch(`/company-news?symbol=${ticker}&from=${getFromDate(90)}&to=${getToDate()}`),
+      finnhubFetch(`/company-news?symbol=${ticker}&from=${getFromDate(180)}&to=${getToDate()}`),
       finnhubFetch(`/stock/earnings?symbol=${ticker}&limit=4`)
     ]);
     const out=[];
     if(earnings?.length){
       earnings.slice(0,count).forEach(e=>{
-        out.push({form:'Earnings',date:e.date||e.period,accession:'',description:'',summary:`EPS actual: ${e.actual??'—'}, estimate: ${e.estimate??'—'}, revenue: ${e.revenue??'—'}`});
+        const date=e.date||e.period||'';
+        const rev=e.revenue?`$${(e.revenue/1e9).toFixed(1)}B`:'N/A';
+        out.push({form:'Earnings',date,accession:'',description:'',
+          summary:`Q${e.quarter||'?'} ${e.year||''}: EPS ${e.actual??'—'} vs est ${e.estimate??'—'} (surprise ${e.surprisePercent!=null?e.surprisePercent.toFixed(1)+'%':'N/A'}), revenue ${rev}`});
       });
     }
     if(news?.length){
-      news.slice(0,3).forEach(n=>{
-        out.push({form:'News',date:new Date(n.datetime*1000).toISOString().split('T')[0],accession:'',description:n.url||'',summary:n.headline});
+      news.slice(0,2).forEach(n=>{
+        out.push({form:'News',date:new Date(n.datetime*1000).toISOString().split('T')[0],
+          accession:'',description:n.url||'',summary:n.headline});
       });
     }
-    return out.slice(0,count+2);
-  }catch{return[];}
+    return out.slice(0,count+3);
+  }catch(e){console.log('edgarFetch error',ticker,e);return[];}
 }
 
 async function fetchFilingText(ticker){
@@ -1089,3 +1088,5 @@ async function loadCompanyDetail(ticker){
   }catch(e){el.innerHTML=`<div class="co-detail"><div class="ms-err">Error: ${e.message}</div></div>`;}
 }
 </script>
+</body>
+</html>
