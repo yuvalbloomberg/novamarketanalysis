@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Nova Market Intelligence</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --p:#6B21D6;--pl:#A855F7;--pbg:#F5F0FF;--pdim:rgba(107,33,214,0.08);--pb:rgba(107,33,214,0.2);
+  --grad:linear-gradient(135deg,#6B21D6 0%,#A855F7 100%);
+  --bg:#F8F7FC;--w:#fff;--t1:#1A1033;--t2:#4B4568;--t3:#8B85A8;--t4:#C4C0D8;
+  --b1:#E8E4F0;--b2:#D0C8E8;
+  --bull:#059669;--bullbg:#ECFDF5;--bear:#DC2626;--bearbg:#FEF2F2;--neu:#D97706;--neubg:#FFFBEB;
+  --r6:6px;--r10:10px;--r14:14px;
+  --nova-navy:#0A1628;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;}
+.wrap{max-width:1120px;margin:0 auto;padding:16px 20px;}
+
+/* TOPBAR */
+.topbar{background:var(--grad);border-radius:var(--r14);padding:13px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 16px rgba(107,33,214,.25);}
+.brand{display:flex;align-items:center;gap:12px;}
+/* Nova logo SVG inline — matches the wordmark style */
+.nova-wordmark{height:28px;display:flex;align-items:center;}
+.brand-text{font-size:13px;color:rgba(255,255,255,0.75);margin-right:4px;font-weight:400;letter-spacing:0.02em;}
+.brand-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;}
+.tbr{display:flex;align-items:center;gap:8px;}
+.tbtn{font-size:11px;padding:6px 13px;border-radius:var(--r6);border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;transition:background .15s;}
+.tbtn:hover{background:rgba(255,255,255,.22);}
+.tbtn.w{background:#fff;color:var(--p);}
+.tbtn.w:hover{background:rgba(255,255,255,.9);}
+.sdot{width:7px;height:7px;border-radius:50%;background:#F59E0B;}
+.sdot.live{background:#34D399;}
+
+/* PANELS */
+.panel{background:var(--w);border:1px solid var(--b1);border-radius:var(--r14);padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(107,33,214,.04);}
+.panel.accent{border-left:3px solid var(--p);}
+.ph{font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.ph-l{display:flex;align-items:center;gap:7px;}
+.ph-l i{color:var(--p);font-size:15px;}
+
+/* AUTH */
+.auth-box{text-align:center;padding:48px 24px;}
+.auth-box h2{font-size:18px;font-weight:600;margin-bottom:8px;}
+.auth-box p{font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:24px;}
+.auth-btn{background:var(--grad);color:#fff;border:none;padding:12px 28px;border-radius:var(--r6);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(107,33,214,.3);}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
+.metric{background:var(--w);border:1px solid var(--b1);border-radius:var(--r10);padding:12px;text-align:center;}
+.mv{font-size:22px;font-weight:700;color:var(--p);}
+.ml{font-size:10px;color:var(--t3);margin-top:3px;}
+
+/* PARSE STATUS */
+.parse-status{background:var(--w);border:1px solid var(--b1);border-radius:var(--r10);padding:10px 14px;margin-bottom:12px;}
+.ps-title{font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.ps-title i{color:var(--p);}
+.ps-list{display:flex;flex-direction:column;gap:4px;}
+.ps-item{display:flex;align-items:center;gap:8px;font-size:11px;}
+
+/* PROGRESS */
+.pw{margin-bottom:10px;}
+.pl{font-size:11px;color:var(--t3);margin-bottom:3px;}
+.pt{height:3px;background:var(--b1);border-radius:2px;overflow:hidden;}
+.pb{height:100%;background:var(--grad);border-radius:2px;transition:width .4s;}
+
+/* CATEGORY TABS */
+.cat-tabs{display:flex;gap:8px;margin-bottom:12px;}
+.cat-tab{flex:1;padding:12px;border-radius:var(--r10);border:2px solid var(--b1);background:var(--w);cursor:pointer;text-align:center;transition:all .15s;}
+.cat-tab:hover{border-color:var(--pb);}
+.cat-tab.active{border-color:var(--p);background:var(--pdim);}
+.ct-icon{font-size:22px;color:var(--t3);margin-bottom:4px;}
+.cat-tab.active .ct-icon{color:var(--p);}
+.ct-name{font-size:12px;font-weight:600;color:var(--t2);}
+.cat-tab.active .ct-name{color:var(--p);}
+.ct-sub{font-size:10px;color:var(--t3);margin-top:2px;}
+.cat-panel{display:none;}
+.cat-panel.active{display:block;}
+
+/* CAT HEADER */
+.cat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.cat-title{font-size:14px;font-weight:600;}
+.cat-actions{display:flex;gap:6px;}
+.act-btn{font-size:11px;padding:5px 11px;border-radius:var(--r6);border:1px solid var(--b2);background:var(--w);color:var(--t2);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;}
+.act-btn:hover{background:var(--pdim);border-color:var(--pb);color:var(--p);}
+
+/* ANALYST TOGGLES */
+.atogs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.atog{font-size:10px;padding:3px 10px;border-radius:99px;border:1.5px solid;background:var(--bg);cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .12s;}
+.atog.off{opacity:.3;filter:grayscale(.9);}
+.atdot{width:7px;height:7px;border-radius:50%;}
+
+/* YEAR SELECTOR */
+.year-sel-wrap{margin-bottom:10px;}
+.year-sel-label{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;}
+.year-sel{display:flex;flex-wrap:wrap;gap:4px;}
+.yr-btn{font-size:10px;padding:3px 9px;border-radius:99px;border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;transition:all .12s;}
+.yr-btn:hover{border-color:var(--pb);color:var(--p);}
+.yr-btn.active{background:var(--grad);border-color:transparent;color:#fff;}
+
+/* CHART */
+.chart-wrap{position:relative;height:320px;margin-bottom:12px;}
+
+/* TABLE */
+.dt-wrap{overflow-x:auto;}
+table.dt{width:100%;border-collapse:collapse;font-size:11px;}
+table.dt th{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:5px 8px;text-align:left;border-bottom:1px solid var(--b1);white-space:nowrap;}
+table.dt td{padding:5px 8px;border-bottom:1px solid var(--b1);vertical-align:middle;}
+table.dt tr:last-child td{border-bottom:none;}
+table.dt tr:hover td{background:var(--bg);}
+.src-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;}
+
+/* PROCESS CONTROL */
+.pc-dropdown{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.pc-dropdown label{font-size:11px;color:var(--t2);font-weight:500;}
+.pc-dropdown select{font-size:12px;padding:6px 10px;border-radius:var(--r6);border:1px solid var(--b2);background:var(--w);color:var(--t1);cursor:pointer;font-family:inherit;}
+.pc-dropdown select:focus{outline:none;border-color:var(--p);}
+
+/* DIVIDER */
+.section-divider{display:flex;align-items:center;gap:12px;margin:20px 0 12px;}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--b1);}
+.section-divider span{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);}
+
+/* TAKEAWAYS */
+.tw-row{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--b1);}
+.tw-row:last-child{border-bottom:none;}
+.tw-arr{color:var(--p);font-size:10px;margin-top:3px;flex-shrink:0;font-weight:700;}
+.tw-txt{flex:1;font-size:12px;line-height:1.6;}
+.tw-tags{display:flex;gap:5px;flex-shrink:0;align-items:center;}
+.sbadge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;}
+.s5{background:var(--pbg);color:var(--p);}
+.s4{background:#EDE9FF;color:#5B21B6;}
+.s3{background:#F3E8FF;color:#7C3AED;}
+.stag{font-size:9px;color:var(--t3);padding:2px 7px;border:1px solid var(--b1);border-radius:3px;}
+.stag-link{font-size:9px;padding:2px 7px;border:1px solid var(--pb);border-radius:3px;color:var(--p);text-decoration:none;background:var(--pdim);}
+.stag-link:hover{background:var(--pbg);}
+
+/* MISC */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+table.mt{width:100%;border-collapse:collapse;font-size:11px;}
+table.mt th{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:5px 8px;text-align:left;border-bottom:1px solid var(--b1);}
+table.mt td{padding:6px 8px;border-bottom:1px solid var(--b1);vertical-align:middle;}
+table.mt tr:last-child td{border-bottom:none;}
+.uu{color:var(--bull);font-weight:700;}.dd{color:var(--bear);font-weight:700;}
+.imp{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;}
+.ic{background:var(--pbg);color:var(--p);}.ih{background:#EDE9FF;color:#5B21B6;}.im{background:var(--neubg);color:#B45309;}.il{background:var(--bg);color:var(--t3);}
+.dh{color:var(--bear);font-weight:600;}.dm{color:var(--neu);}.dl{color:var(--bull);}
+.ch{color:var(--bull);font-weight:600;}.cm{color:var(--neu);}.cl{color:var(--bear);}
+.ascr{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;}
+.acard{background:var(--w);border:1px solid var(--b1);border-radius:var(--r10);padding:12px 13px;min-width:155px;flex-shrink:0;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s;}
+.acard::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:transparent;transition:background .15s;}
+.acard:hover::before,.acard.active::before{background:var(--grad);}
+.acard:hover{border-color:var(--pb);}
+.ac-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+.ac-name{font-size:12px;font-weight:600;}
+.ac-dot{width:8px;height:8px;border-radius:50%;}
+.ac-spec{font-size:9px;color:var(--p);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+.ac-date{font-size:10px;color:var(--t3);margin-bottom:5px;}
+.ac-sum{font-size:10px;color:var(--t2);line-height:1.5;margin-bottom:7px;}
+.ac-stars{font-size:10px;color:var(--p);}
+.stale-lbl{font-size:9px;color:var(--bear);font-weight:600;}
+.cbr{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.cbn{font-size:11px;color:var(--t2);width:90px;flex-shrink:0;}
+.cbt{flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--b1);}
+.cbf{height:100%;border-radius:3px;background:var(--grad);}
+.cbv{font-size:11px;color:var(--t1);width:38px;text-align:right;font-weight:500;}
+.cnum{font-size:28px;font-weight:700;color:var(--p);margin-bottom:3px;}
+.csub{font-size:11px;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.cpill{font-size:10px;padding:2px 9px;border-radius:99px;background:var(--bullbg);color:var(--bull);border:1px solid rgba(5,150,105,.2);}
+.mtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.mt{font-size:11px;padding:5px 12px;border-radius:var(--r6);border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;font-family:inherit;}
+.mt:hover{border-color:var(--pb);color:var(--p);}
+.mt.active{background:var(--pdim);border-color:var(--pb);color:var(--p);font-weight:500;}
+.qa-row{display:flex;gap:8px;}
+.qa-row input{flex:1;font-size:13px;padding:9px 13px;border-radius:var(--r6);border:1px solid var(--b2);background:var(--w);color:var(--t1);font-family:inherit;}
+.qa-row input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px var(--pdim);}
+.qa-row input::placeholder{color:var(--t4);}
+.qa-btn{font-size:13px;padding:9px 20px;border-radius:var(--r6);background:var(--grad);color:#fff;border:none;cursor:pointer;font-weight:600;font-family:inherit;}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
+.chip{font-size:11px;padding:4px 12px;border-radius:99px;border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;}
+.chip:hover{border-color:var(--pb);color:var(--p);}
+.qa-ans{margin-top:12px;font-size:13px;line-height:1.7;background:var(--pdim);border-radius:var(--r10);padding:14px 16px;border-left:3px solid var(--p);}
+.qa-src{font-size:10px;color:var(--t3);margin-top:8px;padding-top:6px;border-top:1px solid var(--pb);}
+.na-msg{font-size:12px;color:var(--t3);text-align:center;padding:32px;font-style:italic;}
+.stale-warning{font-size:11px;color:var(--bear);background:var(--bearbg);border:1px solid rgba(220,38,38,.2);border-radius:var(--r6);padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spin{animation:spin .8s linear infinite;display:inline-block;}
+footer{text-align:center;padding:14px;font-size:11px;color:var(--t3);border-top:1px solid var(--b1);margin-top:4px;}
+footer em{color:var(--p);font-style:normal;}
+
+/* MARKET SIGNALS TAB */
+.ms-feed{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.ms-insight{display:flex;gap:12px;padding:12px 14px;background:var(--w);border:1px solid var(--b1);border-radius:var(--r10);transition:border-color .15s;}
+.ms-insight:hover{border-color:var(--pb);}
+.ms-insight.nova-high{border-left:3px solid var(--p);background:var(--pdim);}
+.ms-insight.nova-med{border-left:3px solid #A855F7;}
+.ms-insight.nova-low{border-left:3px solid var(--b2);}
+.ms-score{width:28px;height:28px;border-radius:50%;background:var(--grad);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.ms-score.med{background:linear-gradient(135deg,#A855F7,#7C3AED);}
+.ms-score.low{background:var(--b2);color:var(--t2);}
+.ms-body{flex:1;}
+.ms-text{font-size:12px;line-height:1.6;color:var(--t1);margin-bottom:6px;}
+.ms-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.ms-company{font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;background:var(--nova-navy);color:#fff;letter-spacing:.04em;}
+.ms-company.competitor{background:#374151;}
+.ms-company.customer{background:#0A4D2E;color:#34D399;}
+.ms-src{font-size:9px;color:var(--t3);padding:2px 7px;border:1px solid var(--b1);border-radius:3px;}
+.ms-date{font-size:9px;color:var(--t4);}
+.ms-relevance{font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;}
+.ms-relevance.high{background:var(--pbg);color:var(--p);}
+.ms-relevance.med{background:#EDE9FF;color:#5B21B6;}
+.ms-relevance.low{background:var(--bg);color:var(--t3);}
+
+/* COMPANY SELECTOR */
+.co-grid{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.co-btn{font-size:10px;padding:4px 10px;border-radius:var(--r6);border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;font-weight:500;transition:all .12s;}
+.co-btn:hover{border-color:var(--pb);color:var(--p);}
+.co-btn.active{background:var(--grad);border-color:transparent;color:#fff;}
+.co-btn.customer{border-color:rgba(5,150,105,.3);color:#065F46;}
+.co-btn.customer.active{background:linear-gradient(135deg,#059669,#34D399);border-color:transparent;color:#fff;}
+.co-btn.competitor{border-color:rgba(220,38,38,.25);color:#991B1B;}
+.co-btn.competitor.active{background:linear-gradient(135deg,#DC2626,#F87171);border-color:transparent;color:#fff;}
+
+/* COMPANY DETAIL */
+.co-detail{background:var(--w);border:1px solid var(--b1);border-radius:var(--r14);padding:14px 16px;}
+.co-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.co-detail-name{font-size:15px;font-weight:700;color:var(--t1);}
+.co-detail-type{font-size:9px;font-weight:600;padding:3px 9px;border-radius:99px;margin-left:8px;}
+.co-detail-type.customer{background:var(--bullbg);color:var(--bull);border:1px solid rgba(5,150,105,.2);}
+.co-detail-type.competitor{background:var(--bearbg);color:var(--bear);border:1px solid rgba(220,38,38,.15);}
+.co-filing-row{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);font-size:11px;align-items:flex-start;}
+.co-filing-row:last-child{border-bottom:none;}
+.co-filing-type{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;background:var(--pdim);color:var(--p);flex-shrink:0;margin-top:1px;}
+.co-filing-quote{flex:1;line-height:1.6;color:var(--t1);}
+.co-filing-meta{font-size:10px;color:var(--t3);flex-shrink:0;white-space:nowrap;}
+.ms-loading{text-align:center;padding:32px;color:var(--t3);font-size:12px;}
+.ms-err{font-size:11px;color:var(--bear);background:var(--bearbg);border:1px solid rgba(220,38,38,.15);border-radius:var(--r6);padding:10px 14px;}
+.co-legend{display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+.co-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2);}
+.co-legend-dot{width:8px;height:8px;border-radius:50%;}
+.ms-refresh-btn{font-size:10px;padding:4px 10px;border-radius:var(--r6);border:1px solid var(--b2);background:var(--w);color:var(--t2);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;}
+.ms-refresh-btn:hover{background:var(--pdim);color:var(--p);}
+.cache-note{font-size:9px;color:var(--t4);font-style:italic;}
+/* PROGRESS STEPS */
+.co-progress{display:flex;align-items:center;gap:6px;padding:12px 14px;background:var(--bg);border-radius:var(--r10);margin-bottom:8px;}
+.co-prog-step{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3);}
+.co-prog-step.active{color:var(--p);font-weight:600;}
+.co-prog-step.done{color:var(--bull);}
+.co-prog-dot{width:7px;height:7px;border-radius:50%;background:var(--b2);flex-shrink:0;}
+.co-prog-step.active .co-prog-dot{background:var(--p);animation:pulse 1s infinite;}
+.co-prog-step.done .co-prog-dot{background:var(--bull);}
+.co-prog-sep{flex:1;height:1px;background:var(--b1);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* SEC FILING VIEWER */
+.sec-filing-btn{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:3px 9px;border-radius:4px;border:1px solid var(--pb);background:var(--pdim);color:var(--p);cursor:pointer;font-family:inherit;margin-top:6px;}
+.sec-filing-btn:hover{background:var(--pbg);}
+
+/* NOVA COMPETITIVE SCORE */
+.nova-score-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--pdim);border-radius:var(--r10);margin-bottom:12px;}
+.nova-score-num{font-size:28px;font-weight:800;color:var(--p);}
+.nova-score-label{font-size:10px;color:var(--t2);line-height:1.4;}
+.nova-score-heat{flex:1;height:6px;background:var(--b1);border-radius:3px;overflow:hidden;}
+.nova-score-fill{height:100%;border-radius:3px;background:var(--grad);transition:width .5s;}
+.nova-score-badge{font-size:9px;font-weight:700;padding:3px 9px;border-radius:99px;}
+.score-hot{background:#FEF3C7;color:#92400E;}
+.score-warm{background:var(--pbg);color:var(--p);}
+.score-cool{background:var(--bg);color:var(--t3);}
+
+/* STOCK TICKER */
+.co-stock-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);font-size:11px;}
+.co-stock-price{font-size:16px;font-weight:700;color:var(--t1);}
+.co-stock-change{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;}
+.co-stock-up{background:var(--bullbg);color:var(--bull);}
+.co-stock-dn{background:var(--bearbg);color:var(--bear);}
+.co-stock-meta{font-size:10px;color:var(--t3);}
+
+/* SOURCE LINKS */
+.co-sources{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;}
+.co-src-btn{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:500;padding:5px 10px;border-radius:var(--r6);border:1px solid var(--b1);background:var(--bg);color:var(--t2);text-decoration:none;transition:all .12s;}
+.co-src-btn:hover{border-color:var(--pb);background:var(--pdim);color:var(--p);}
+.co-src-btn i{font-size:13px;}
+
+/* TRANSCRIPT */
+.transcript-box{margin-top:10px;background:var(--bg);border-radius:var(--r10);padding:12px 14px;border:1px solid var(--b1);}
+.transcript-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.transcript-title{font-size:11px;font-weight:600;color:var(--t1);}
+.transcript-fetch-btn{font-size:10px;padding:4px 10px;border-radius:var(--r6);background:var(--grad);color:#fff;border:none;cursor:pointer;font-family:inherit;}
+.transcript-content{font-size:11px;line-height:1.7;color:var(--t2);}
+.trigger-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;background:#FEF9C3;color:#854D0E;margin:2px;}
+.trigger-badge i{font-size:10px;}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <!-- Nova wordmark SVG -->
+    <svg height="26" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
+    </svg>
+    <div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence</div>
+      <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
+    </div>
+  </div>
+  <div class="tbr">
+    <span class="sdot" id="sdot"></span>
+    <button class="tbtn" onclick="doSync()"><i class="ti ti-refresh"></i> Sync Drive</button>
+    <button class="tbtn w" id="authBtn" onclick="initiateAuth()"><i class="ti ti-login"></i> Connect</button>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div id="authPanel" class="panel">
+  <div class="auth-box">
+    <i class="ti ti-brand-google-drive" style="font-size:52px;color:var(--p);display:block;margin-bottom:16px;"></i>
+    <h2>Connect to Google Drive</h2>
+    <p>Connect your Google account to load reports from <strong>Nova_Market_Intelligence</strong>.</p>
+    <button class="auth-btn" onclick="initiateAuth()"><i class="ti ti-login"></i> &nbsp;Sign in with Google</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main" style="display:none;">
+
+  <div class="metrics">
+    <div class="metric"><div class="mv" id="mF">—</div><div class="ml">Files indexed</div></div>
+    <div class="metric"><div class="mv" id="mS">—</div><div class="ml">Sources</div></div>
+    <div class="metric"><div class="mv" id="mP">—</div><div class="ml">Parsed</div></div>
+    <div class="metric"><div class="mv" id="mE">—</div><div class="ml">Parse errors</div></div>
+  </div>
+
+  <div id="progWrap" class="pw" style="display:none;">
+    <div class="pl" id="progLbl">Loading...</div>
+    <div class="pt"><div class="pb" id="progBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="parse-status" id="parseStatus" style="display:none;">
+    <div class="ps-title"><i class="ti ti-info-circle"></i> Parse status</div>
+    <div class="ps-list" id="pslist"></div>
+  </div>
+
+  <!-- CATEGORY TABS -->
+  <div class="cat-tabs">
+    <div class="cat-tab active" onclick="showCat('wfe',this)">
+      <div class="ct-icon"><i class="ti ti-tools"></i></div>
+      <div class="ct-name">WFE</div><div class="ct-sub">Wafer Fab Equipment</div>
+    </div>
+    <div class="cat-tab" onclick="showCat('capex',this)">
+      <div class="ct-icon"><i class="ti ti-building-factory-2"></i></div>
+      <div class="ct-name">Capex</div><div class="ct-sub">Capital Expenditure</div>
+    </div>
+    <div class="cat-tab" onclick="showCat('revenue',this)">
+      <div class="ct-icon"><i class="ti ti-chart-line"></i></div>
+      <div class="ct-name">Industry Revenue</div><div class="ct-sub">Semiconductor Market</div>
+    </div>
+    <div class="cat-tab" onclick="showCat('processcontrol',this)">
+      <div class="ct-icon"><i class="ti ti-microscope"></i></div>
+      <div class="ct-name">Process Control</div><div class="ct-sub">Gartner & TechInsights</div>
+    </div>
+    <div class="cat-tab" onclick="showCat('marketsignals',this)">
+      <div class="ct-icon"><i class="ti ti-antenna-bars-5"></i></div>
+      <div class="ct-name">Market Signals</div><div class="ct-sub">EDGAR · Live Intel</div>
+    </div>
+  </div>
+
+  <!-- WFE PANEL -->
+  <div class="cat-panel active" id="panel-wfe">
+    <div class="panel">
+      <div class="cat-header">
+        <div class="cat-title">WFE Forecast ($M)</div>
+        <div class="cat-actions">
+          <button class="act-btn" onclick="downloadChart('wfe')"><i class="ti ti-download"></i> PNG</button>
+          <button class="act-btn" onclick="downloadCSV('wfe')"><i class="ti ti-file-spreadsheet"></i> CSV</button>
+        </div>
+      </div>
+      <div class="atogs" id="wfe-toggles"></div>
+      <div class="year-sel-wrap"><div class="year-sel-label">Time period</div><div class="year-sel" id="wfe-years"></div></div>
+      <div class="chart-wrap"><canvas id="wfe-chart"></canvas></div>
+      <div class="dt-wrap" id="wfe-table"><div class="na-msg">Connect and sync to load WFE data.</div></div>
+    </div>
+  </div>
+
+  <!-- CAPEX PANEL -->
+  <div class="cat-panel" id="panel-capex">
+    <div class="panel">
+      <div class="cat-header">
+        <div class="cat-title">Capex Forecast ($M)</div>
+        <div class="cat-actions">
+          <button class="act-btn" onclick="downloadChart('capex')"><i class="ti ti-download"></i> PNG</button>
+          <button class="act-btn" onclick="downloadCSV('capex')"><i class="ti ti-file-spreadsheet"></i> CSV</button>
+        </div>
+      </div>
+      <div class="atogs" id="capex-toggles"></div>
+      <div class="year-sel-wrap"><div class="year-sel-label">Time period</div><div class="year-sel" id="capex-years"></div></div>
+      <div class="chart-wrap"><canvas id="capex-chart"></canvas></div>
+      <div class="dt-wrap" id="capex-table"><div class="na-msg">Connect and sync to load Capex data.</div></div>
+    </div>
+  </div>
+
+  <!-- REVENUE PANEL -->
+  <div class="cat-panel" id="panel-revenue">
+    <div class="panel">
+      <div class="cat-header">
+        <div class="cat-title">Industry Revenue Forecast ($M)</div>
+        <div class="cat-actions">
+          <button class="act-btn" onclick="downloadChart('revenue')"><i class="ti ti-download"></i> PNG</button>
+          <button class="act-btn" onclick="downloadCSV('revenue')"><i class="ti ti-file-spreadsheet"></i> CSV</button>
+        </div>
+      </div>
+      <div class="atogs" id="revenue-toggles"></div>
+      <div class="year-sel-wrap"><div class="year-sel-label">Time period</div><div class="year-sel" id="revenue-years"></div></div>
+      <div class="chart-wrap"><canvas id="revenue-chart"></canvas></div>
+      <div class="dt-wrap" id="revenue-table"><div class="na-msg">Connect and sync to load Revenue data.</div></div>
+    </div>
+  </div>
+
+  <!-- PROCESS CONTROL PANEL -->
+  <div class="cat-panel" id="panel-processcontrol">
+    <div class="panel">
+      <div class="cat-header">
+        <div class="cat-title">Process Control Market ($M)</div>
+        <div class="cat-actions">
+          <button class="act-btn" onclick="downloadChart('pc')"><i class="ti ti-download"></i> PNG</button>
+          <button class="act-btn" onclick="downloadCSV('pc')"><i class="ti ti-file-spreadsheet"></i> CSV</button>
+        </div>
+      </div>
+      <div class="pc-dropdown">
+        <label>Segment:</label>
+        <select id="pcSegment" onchange="drawPC()"></select>
+        <label style="margin-left:12px;">Quarter:</label>
+        <select id="pcQuarter" onchange="drawPC()">
+          <option value="current">Current (latest)</option>
+        </select>
+      </div>
+      <div class="atogs" id="pc-toggles"></div>
+      <div class="chart-wrap"><canvas id="pc-chart"></canvas></div>
+      <div class="dt-wrap" id="pc-table"><div class="na-msg">Process Control data will appear after syncing files from Gartner and TechInsights.</div></div>
+    </div>
+  </div>
+
+
+  <!-- MARKET SIGNALS PANEL -->
+  <div class="cat-panel" id="panel-marketsignals">
+
+    <div class="panel accent">
+      <div class="ph">
+        <div class="ph-l"><i class="ti ti-sparkles"></i> Nova Relevance Feed <span style="font-size:10px;color:var(--t3);font-weight:400;margin-left:6px;">— ranked by Nova impact</span></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="cache-note" id="feedCacheNote"></span>
+          <button class="ms-refresh-btn" onclick="loadNovaFeed(true)"><i class="ti ti-refresh"></i> Refresh</button>
+        </div>
+      </div>
+      <div id="novaFeed"><div class="ms-loading">Select this tab to load live intelligence from SEC EDGAR...</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-l"><i class="ti ti-building-factory-2"></i> Company Deep Dive</div></div>
+      <div class="co-legend">
+        <div class="co-legend-item"><div class="co-legend-dot" style="background:#059669"></div>Nova customer</div>
+        <div class="co-legend-item"><div class="co-legend-dot" style="background:#DC2626"></div>Competitor</div>
+      </div>
+      <div class="co-grid" id="coGrid"></div>
+      <div id="coDetail"><div class="na-msg">Select a company for details</div></div>
+    </div>
+
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="section-divider"><span>Intelligence dashboard</span></div>
+
+  <!-- TAKEAWAYS -->
+  <div class="panel accent">
+    <div class="ph">
+      <div class="ph-l"><i class="ti ti-sparkles"></i> Executive Takeaways <span style="font-size:10px;color:var(--t3);font-weight:400;margin-left:6px;">— files older than 6 months excluded</span></div>
+      <button class="act-btn" onclick="generateTakeaways()">Regenerate</button>
+    </div>
+    <div id="twList"><div class="na-msg">Connect and sync to generate AI takeaways.</div></div>
+  </div>
+
+  <!-- WHAT CHANGED + DIVERGENCE -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="ph"><div class="ph-l"><i class="ti ti-git-diff"></i> What Changed</div></div>
+      <table class="mt"><thead><tr><th>Topic</th><th>Change</th><th>Dir</th><th>Source</th><th>Nova</th></tr></thead>
+      <tbody id="wcBody"><tr><td colspan="5" style="padding:16px;text-align:center;color:var(--t3);font-style:italic;font-size:12px;">N/A — no data yet</td></tr></tbody></table>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="ph-l"><i class="ti ti-chart-bubble"></i> Analyst Divergence</div></div>
+      <table class="mt"><thead><tr><th>Topic</th><th>Divergence</th><th>Confidence</th></tr></thead>
+      <tbody id="divBody"><tr><td colspan="3" style="padding:16px;text-align:center;color:var(--t3);font-style:italic;font-size:12px;">N/A — no data yet</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- ANALYST CARDS -->
+  <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;">Analyst sources</div>
+  <div class="ascr" id="aCards"><div class="na-msg" style="padding:12px;">No sources detected yet</div></div>
+
+  <!-- CONSENSUS + TIMELINE -->
+  <div class="two-col" style="margin-top:10px;">
+    <div class="panel">
+      <div class="ph"><div class="ph-l"><i class="ti ti-calculator"></i> WFE Consensus</div></div>
+      <div id="consBody"><div class="na-msg">N/A — insufficient data</div></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="ph-l"><i class="ti ti-timeline"></i> Sentiment Timeline</div></div>
+      <div style="position:relative;height:170px;"><canvas id="tlChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- FILES -->
+  <div class="panel">
+    <div class="ph"><div class="ph-l"><i class="ti ti-files"></i> Files in Drive</div><div style="font-size:10px;color:var(--t3);" id="fileMeta"></div></div>
+    <div style="display:flex;flex-direction:column;gap:5px;max-height:280px;overflow-y:auto;" id="fileList"><div class="na-msg">No files loaded</div></div>
+  </div>
+
+  <!-- COPILOT -->
+  <div class="panel">
+    <div class="ph"><div class="ph-l"><i class="ti ti-robot"></i> AI Research Copilot</div></div>
+    <div class="mtabs">
+      <button class="mt active" onclick="setMode('general',this)">General</button>
+      <button class="mt" onclick="setMode('nova',this)">Nova Impact</button>
+      <button class="mt" onclick="setMode('sales',this)">Sales Mode</button>
+      <button class="mt" onclick="setMode('risk',this)">Risk Analysis</button>
+      <button class="mt" onclick="setMode('compare',this)">Compare Sources</button>
+    </div>
+    <div class="qa-row">
+      <input type="text" id="qaIn" placeholder="Ask a question about your reports..." onkeydown="if(event.key==='Enter')askQ()"/>
+      <button class="qa-btn" onclick="askQ()">Ask</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div id="qaOut"></div>
+  </div>
+
+</div>
+<footer><em>Nova</em> Market Intelligence &nbsp;·&nbsp; Internal use only &nbsp;·&nbsp; Marketing Research Hub</footer>
+</div>
+
+<script>
+const CLIENT_ID='828139804659-dcg8dep3ihbmn4sgiu5js4kndp8kf1o3.apps.googleusercontent.com';
+const FOLDER='Nova_Market_Intelligence';
+const STALE_MONTHS=6;
+const WORKER_URL='https://nova-proxy.yuvalbloomberg.workers.dev';
+
+/* ── PROCESS CONTROL SEGMENTS ── */
+const PC_SEGMENTS_TI={
+  'Total Process Diagnostics':7,'Wafer Fab Process Control':8,'Film/Stack/Shape Metrology':9,
+  'Ellipsometers':10,'Optical Surface Profiling':12,'Optical Shape/CD':15,'Overlay Metrology':17,
+  'CD SEMs':20,'Defect Inspection Tools':21,'Optical Patterned Wafer Inspection':22,
+  'Un-patterned Darkfield Inspection':23,'E-beam Inspection':26,'Defect Review Stations':27,
+  'Reticle Inspection & Repair':29,'Wafer Level Pkg Inspection':35,'Software & Data Analytics':38
+};
+const PC_SEGMENTS_GARTNER={
+  'Total Process Control':88,'Wafer Inspection and Defect Review':78,
+  'Optical Patterned Wafer Inspection':75,'E-Beam Wafer Inspection/Metrology':74,
+  'SEM Defect Review and Classification':76,'Wafer-Level Packaging Inspection':72,
+  'Unpatterned Wafer Inspection':73,'Overlay Metrology':82,'Lithography Metrology':83,
+  'Thin Film Metrology':84,'CD SEM':79
+};
+
+/* ── STATE ── */
+let tok,allFiles=[],qaMode='general';
+let charts={wfe:null,capex:null,revenue:null,pc:null,tl:null};
+let datasets={wfe:{},capex:{},revenue:{},pc:{}};
+let pcData={ti:{},gartner:{}}; // {segmentName: {year: value}}
+let allYears={wfe:[],capex:[],revenue:[]};
+let selYears={wfe:null,capex:null,revenue:null};
+let hidden={wfe:new Set(),capex:new Set(),revenue:new Set(),pc:new Set()};
+let parseLog=[];
+
+/* ── COLORS ── */
+const PALETTE=['#6B21D6','#DC2626','#059669','#D97706','#2D6BA0','#A855F7','#0891B2','#374151','#7C3AED','#B45309'];
+const srcClr={};let ci=0;
+function clr(s){if(!srcClr[s])srcClr[s]=PALETTE[ci++%PALETTE.length];return srcClr[s];}
+const SRC_SPEC={'Gartner':'Cycle & TAM','TechInsights':'Node Roadmaps & WFE','JPMorgan':'WFE & Financial','Goldman Sachs':'Macro & Risk','Yole':'Packaging Expert','SEMI':'Equipment Orders','Barclays':'Supply Chain','Evercore':'SPE Positioning','Nova Internal':'Internal','Other':'Research'};
+
+/* ── SOURCE DETECTION ── */
+function guessSource(name){
+  const n=name.toLowerCase();
+  if(n.includes('gartner'))return'Gartner';
+  if(n.includes('jpmorgan')||n.includes('jpm'))return'JPMorgan';
+  if(n.includes('goldman'))return'Goldman Sachs';
+  if(n.includes('yole'))return'Yole';
+  if(n.startsWith('ti ')||n.includes(' ti ')||n.includes('ti_')||n.includes('techinsight')||n.includes('vlsi')||n.includes('semiconductor_forecast')||n.includes('wfe forecast')||n.includes('semiconductor_wfe'))return'TechInsights';
+  if(n.includes('barclays'))return'Barclays';
+  if(n.includes('evercore'))return'Evercore';
+  if(n.includes('ciq'))return'S&P CIQ';
+  if(n.includes('semi '))return'SEMI';
+  if(n.includes('nova')||n.includes('customer'))return'Nova Internal';
+  return'Other';
+}
+
+/* ── STALENESS ── */
+function isStale(modifiedTime){return(Date.now()-new Date(modifiedTime))>STALE_MONTHS*30*86400000;}
+function isVeryStale(modifiedTime){return(Date.now()-new Date(modifiedTime))>STALE_MONTHS*30*86400000;}
+
+/* ── AUTH ── */
+let tc;
+window.addEventListener('load',()=>{setTimeout(()=>{if(window.google&&google.accounts)tc=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:'https://www.googleapis.com/auth/drive.readonly',callback:onToken});},1500);});
+function initiateAuth(){if(!tc)tc=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:'https://www.googleapis.com/auth/drive.readonly',callback:onToken});tc.requestAccessToken();}
+function onToken(r){if(!r.access_token)return;tok=r.access_token;document.getElementById('authPanel').style.display='none';document.getElementById('main').style.display='block';document.getElementById('sdot').classList.add('live');document.getElementById('authBtn').style.display='none';loadFiles();}
+async function api(url){const r=await fetch(url,{headers:{Authorization:`Bearer ${tok}`}});return r.json();}
+
+/* ── LOAD FILES ── */
+async function loadFiles(){
+  prog(true,'Searching folder...',10);
+  parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};
+  const s=await api(`https://www.googleapis.com/drive/v3/files?q=name='${FOLDER}' and mimeType='application/vnd.google-apps.folder'&fields=files(id,name)`);
+  if(!s.files?.length){prog(false);document.getElementById('fileList').innerHTML='<div class="na-msg">Folder not found in Drive.</div>';return;}
+  const fid=s.files[0].id;
+  let files=[],pt='';
+  do{const r=await api(`https://www.googleapis.com/drive/v3/files?q='${fid}' in parents and mimeType!='application/vnd.google-apps.folder'&fields=files(id,name,mimeType,modifiedTime,size)&pageSize=100${pt?'&pageToken='+pt:''}`);if(r.files)files=files.concat(r.files);pt=r.nextPageToken||'';}while(pt);
+  allFiles=files;
+  const activeFiles=files.filter(f=>!isVeryStale(f.modifiedTime));
+  document.getElementById('mF').textContent=files.length;
+  const srcs=new Set(files.map(f=>guessSource(f.name)));
+  document.getElementById('mS').textContent=srcs.size;
+  document.getElementById('topMeta').textContent=`${files.length} files (${files.length-activeFiles.length} excluded >6mo) · Last sync: ${new Date().toLocaleString('en-GB')}`;
+  document.getElementById('fileMeta').textContent=`${files.length} files`;
+  renderFileList(files);buildAnalystCards(srcs,files);
+  await parseFiles(files);
+}
+
+/* ── PARSE ── */
+async function parseFiles(files){
+  const parseable=files.filter(f=>f.name.match(/\.xlsx?$|\.xlsm$/i)&&f.size&&parseInt(f.size)<55*1024*1024);
+  let n=0,errors=0;
+  for(const f of parseable){
+    prog(true,`Parsing: ${f.name.substring(0,45)}...`,20+Math.round(n/parseable.length*70));
+    try{const res=await parseExcel(f);parseLog.push({file:f.name,status:res.found?'ok':'skip',msg:res.found?`Found: ${res.cats.join(', ')}`:'No recognizable data patterns'});}
+    catch(e){parseLog.push({file:f.name,status:'warn',msg:`Error: ${e.message}`});errors++;}
+    n++;
+  }
+  document.getElementById('mP').textContent=n;
+  const errEl=document.getElementById('mE');errEl.textContent=errors||'—';errEl.style.color=errors?'var(--bear)':'var(--t3)';
+  prog(false);renderParseStatus();renderAllCats();populatePCDropdown();generateTakeaways();
+}
+
+async function parseExcel(f){
+  const src=guessSource(f.name);const fname=f.name.toLowerCase();
+  const isWFE=fname.includes('wfe')||fname.includes('wafer fab')||(fname.includes('semiconductor')&&!fname.includes('capex'));
+  const isCapex=fname.includes('capex')||fname.includes('capital');
+  const isRevenue=fname.includes('revenue')||fname.includes('dollr');
+  const r=await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,{headers:{Authorization:`Bearer ${tok}`}});
+  const ab=await r.arrayBuffer();
+  const wb=XLSX.read(ab,{type:'array'});
+  const cats=[];
+  const YEARS=['2019','2020','2021','2022','2023','2024','2025','2026','2027','2028','2029','2030','2031'];
+
+  /* ── TECHINSIGHTS: Process Diagnostics sheet ── */
+  const pdSheet=wb.Sheets['Process Diagnostics'];
+  if(pdSheet){
+    const pdRows=XLSX.utils.sheet_to_json(pdSheet,{header:1,defval:null});
+    // Find year header row (row index 5 = row 5, 0-indexed row 4)
+    let yearRow=null,yearCols={};
+    pdRows.forEach((row,ri)=>{
+      if(row&&row.some&&row.some(c=>YEARS.includes(String(c)))){
+        if(!yearRow){yearRow=ri;row.forEach((c,ci)=>{if(YEARS.includes(String(c)))yearCols[String(c)]=ci;});}
+      }
+    });
+    if(yearRow!==null){
+      const years=Object.keys(yearCols).sort();
+      Object.entries(PC_SEGMENTS_TI).forEach(([segName,rowIdx])=>{
+        const row=pdRows[rowIdx];
+        if(row){
+          const vals={};let ok=0;
+          years.forEach(y=>{const v=parseFloat(row[yearCols[y]]);if(!isNaN(v)&&v>0){vals[y]=v;ok++;}});
+          if(ok>=3){if(!pcData.ti[segName])pcData.ti[segName]={};Object.assign(pcData.ti[segName],vals);}
+        }
+      });
+      if(Object.keys(pcData.ti).length)cats.push('Process Control (TI)');
+    }
+  }
+
+  /* ── GARTNER: Wafer Fab Equipment Segments sheet ── */
+  const wfesSheet=wb.Sheets['Wafer Fab Equipment  Segments'];
+  if(wfesSheet){
+    const gRows=XLSX.utils.sheet_to_json(wfesSheet,{header:1,defval:null});
+    let yearRow=null,yearCols={};
+    gRows.forEach((row,ri)=>{
+      if(row&&row.some&&row.some(c=>typeof c==='number'&&c>=2024&&c<=2031)){
+        if(!yearRow){yearRow=ri;row.forEach((c,ci)=>{if(typeof c==='number'&&c>=2024&&c<=2031)yearCols[String(c)]=ci;});}
+      }
+    });
+    if(yearRow!==null){
+      const years=Object.keys(yearCols).sort();
+      Object.entries(PC_SEGMENTS_GARTNER).forEach(([segName,rowIdx])=>{
+        const row=gRows[rowIdx];
+        if(row){
+          const vals={};let ok=0;
+          years.forEach(y=>{const v=parseFloat(row[yearCols[y]]);if(!isNaN(v)&&v>0){vals[y]=v;ok++;}});
+          if(ok>=2){if(!pcData.gartner[segName])pcData.gartner[segName]={};Object.assign(pcData.gartner[segName],vals);}
+        }
+      });
+      if(Object.keys(pcData.gartner).length)cats.push('Process Control (Gartner)');
+    }
+  }
+
+  /* ── GENERIC WFE/CAPEX/REVENUE PARSING ── */
+  wb.SheetNames.forEach(sn=>{
+    const sheet=wb.Sheets[sn];
+    const rows=XLSX.utils.sheet_to_csv(sheet).split('\n').map(r=>r.split(','));
+    let hRow=-1,yCols={};
+    rows.forEach((row,ri)=>{const yc=row.filter(c=>YEARS.includes(c?.trim())).length;if(yc>=4){hRow=ri;row.forEach((c,ci)=>{if(YEARS.includes(c?.trim()))yCols[c.trim()]=ci;});}});
+    const years=Object.keys(yCols).sort();
+    const extractRow=(row)=>{const vals={};let ok=0;years.forEach(y=>{const n=parseFloat(row[yCols[y]]?.replace(/[",\s]/g,''));if(!isNaN(n)&&n>50&&n<5000000){vals[y]=n;ok++;}});return ok>=3?vals:null;};
+    if(hRow>=0){
+      (rows.slice(hRow+1,hRow+100)||[]).forEach(row=>{
+        const first=row[0]?.replace(/[",]/g,'').trim();const fu=first.toUpperCase();
+        if(isWFE&&(fu==='WAFER FAB EQUIPMENT (WFE)'||fu==='WAFER FAB EQUIPMENT'||fu==='WFE'||fu==='TOTAL WAFER FAB EQUIPENT')){const v=extractRow(row);if(v){if(!datasets.wfe[src])datasets.wfe[src]={};Object.assign(datasets.wfe[src],v);if(!cats.includes('WFE'))cats.push('WFE');}}
+        if(isCapex){
+          ['TSMC','Samsung','Micron','SK hynix','Intel'].forEach(co=>{if(first===co){const v=extractRow(row);if(v){const k=`${co}`;if(!datasets.capex[k])datasets.capex[k]={};Object.assign(datasets.capex[k],v);if(!cats.includes('Capex'))cats.push('Capex');}}});
+          if(fu==='TOTAL'||fu.includes('TOP 20 TOTAL')||fu==='GRAND TOTAL'){const v=extractRow(row);if(v){if(!datasets.capex[src])datasets.capex[src]={};Object.assign(datasets.capex[src],v);if(!cats.includes('Capex'))cats.push('Capex');}}
+        }
+        if(isRevenue&&(fu==='GRAND TOTAL'||fu==='TOTAL')){const v=extractRow(row);if(v&&Object.values(v).some(x=>x>10000)){if(!datasets.revenue[src])datasets.revenue[src]={};Object.assign(datasets.revenue[src],v);if(!cats.includes('Revenue'))cats.push('Revenue');}}
+      });
+    }
+  });
+  return{found:cats.length>0,cats};
+}
+
+/* ── PARSE STATUS ── */
+function renderParseStatus(){
+  const el=document.getElementById('pslist');const sEl=document.getElementById('parseStatus');
+  if(!parseLog.length){sEl.style.display='none';return;}
+  sEl.style.display='block';
+  el.innerHTML=parseLog.map(p=>{
+    const c=p.status==='ok'?'var(--bull)':p.status==='warn'?'var(--bear)':'var(--t3)';
+    const icon=p.status==='ok'?'ti-check':p.status==='warn'?'ti-alert-triangle':'ti-minus';
+    return`<div class="ps-item"><i class="ti ${icon}" style="color:${c}"></i><span style="color:${c};font-weight:${p.status==='warn'?'600':'400'}">${p.file.substring(0,50)}</span><span style="color:var(--t3)"> — ${p.msg}</span></div>`;
+  }).join('');
+}
+
+/* ── YEAR SELECTOR ── */
+function buildYearSel(cat){
+  const data=datasets[cat];const srcs=Object.keys(data);
+  const ySet=new Set();srcs.forEach(s=>Object.keys(data[s]).forEach(y=>ySet.add(y)));
+  const years=[...ySet].sort();allYears[cat]=years;
+  const el=document.getElementById(`${cat}-years`);
+  const presets=['All','2020-2024','2024-2030'];
+  let html=presets.map(p=>`<button class="yr-btn${(selYears[cat]===null&&p==='All')||(selYears[cat]===p)?' active':''}" onclick="setYearSel('${cat}','${p}',this)">${p}</button>`).join('');
+  html+=years.map(y=>`<button class="yr-btn${selYears[cat]===y?' active':''}" onclick="setYearSel('${cat}','${y}',this)">${y}</button>`).join('');
+  el.innerHTML=html;
+}
+function setYearSel(cat,val,btn){selYears[cat]=val==='All'?null:val;document.querySelectorAll(`#${cat}-years .yr-btn`).forEach(b=>b.classList.remove('active'));btn.classList.add('active');drawCat(cat);}
+function getYears(cat){const s=selYears[cat];const all=allYears[cat];if(!s)return all;if(s.includes('-')){const[from,to]=s.split('-').map(Number);return all.filter(y=>{const n=parseInt(y);return n>=from&&n<=to;});}return all.includes(s)?[s]:all;}
+
+/* ── RENDER ── */
+function renderAllCats(){['wfe','capex','revenue'].forEach(c=>renderCat(c));}
+function renderCat(cat){
+  const data=datasets[cat];const srcs=Object.keys(data);
+  if(!srcs.length){document.getElementById(`${cat}-table`).innerHTML=`<div class="na-msg">N/A — no ${cat.toUpperCase()} data found in indexed files.</div>`;return;}
+  buildYearSel(cat);renderToggles(cat,srcs);drawCat(cat);
+}
+function renderToggles(cat,srcs){
+  document.getElementById(`${cat}-toggles`).innerHTML=srcs.map(s=>{const c=clr(s);const on=!hidden[cat].has(s);return`<div class="atog${on?'':' off'}" style="border-color:${c};color:${c}" onclick="toggleSrc('${cat}','${s}',this)"><span class="atdot" style="background:${c}"></span>${s}</div>`;}).join('');
+}
+function toggleSrc(cat,src,el){if(hidden[cat].has(src))hidden[cat].delete(src);else hidden[cat].add(src);el.classList.toggle('off');drawCat(cat);}
+
+function drawCat(cat){
+  const data=datasets[cat];const srcs=Object.keys(data).filter(s=>!hidden[cat].has(s));const years=getYears(cat);
+  const single=years.length===1;const ctx=document.getElementById(`${cat}-chart`).getContext('2d');
+  if(charts[cat])charts[cat].destroy();
+  if(single){
+    const yr=years[0];
+    charts[cat]=new Chart(ctx,{type:'bar',data:{labels:srcs,datasets:[{label:yr,data:srcs.map(s=>data[s][yr]||null),backgroundColor:srcs.map(s=>clr(s)+'BB'),borderColor:srcs.map(s=>clr(s)),borderWidth:1,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${(c.raw/1000).toFixed(1)}B`}}},scales:{y:{ticks:{callback:v=>`$${(v/1000).toFixed(0)}B`},grid:{color:'rgba(107,33,214,.06)'},border:{display:false}},x:{grid:{display:false},border:{display:false}}}}});
+  }else{
+    charts[cat]=new Chart(ctx,{type:'line',data:{labels:years,datasets:srcs.map(s=>({label:s,data:years.map(y=>data[s]&&data[s][y]!=null?data[s][y]:null),borderColor:clr(s),backgroundColor:clr(s)+'18',borderWidth:2,pointRadius:4,pointBackgroundColor:clr(s),tension:.3,spanGaps:true,fill:false}))},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:10,padding:12}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: $${(c.raw/1000).toFixed(1)}B`}}},scales:{y:{ticks:{font:{size:10},callback:v=>`$${(v/1000).toFixed(0)}B`},grid:{color:'rgba(107,33,214,.06)'},border:{display:false}},x:{ticks:{font:{size:10}},grid:{display:false},border:{display:false}}}}});
+  }
+  let html=`<table class="dt"><thead><tr><th>Source</th>${years.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
+  srcs.forEach(s=>{html+=`<tr><td><span class="src-dot" style="background:${clr(s)}"></span>${s}</td>${years.map(y=>`<td>${data[s]&&data[s][y]?'$'+(data[s][y]/1000).toFixed(1)+'B':'—'}</td>`).join('')}</tr>`;});
+  html+='</tbody></table>';
+  document.getElementById(`${cat}-table`).innerHTML=html;
+}
+
+/* ── PROCESS CONTROL ── */
+function populatePCDropdown(){
+  const allSegs=new Set([...Object.keys(pcData.ti),...Object.keys(pcData.gartner)]);
+  if(!allSegs.size)return;
+  const sel=document.getElementById('pcSegment');
+  sel.innerHTML=[...allSegs].sort().map(s=>`<option value="${s}">${s}</option>`).join('');
+  drawPC();
+}
+
+function drawPC(){
+  const seg=document.getElementById('pcSegment').value;
+  if(!seg)return;
+  const tiVals=pcData.ti[seg]||{};const gVals=pcData.gartner[seg]||{};
+  const allYrs=new Set([...Object.keys(tiVals),...Object.keys(gVals)]);
+  const years=[...allYrs].sort();
+  if(!years.length){document.getElementById('pc-table').innerHTML='<div class="na-msg">No data for this segment.</div>';return;}
+
+  const tiHidden=hidden.pc.has('TechInsights');const gHidden=hidden.pc.has('Gartner');
+  const tiColor='#6B21D6';const gColor='#DC2626';const avgColor='#059669';
+
+  // Build toggles
+  document.getElementById('pc-toggles').innerHTML=
+    `<div class="atog${tiHidden?' off':''}" style="border-color:${tiColor};color:${tiColor}" onclick="togglePCSrc('TechInsights',this)"><span class="atdot" style="background:${tiColor}"></span>TechInsights</div>`+
+    `<div class="atog${gHidden?' off':''}" style="border-color:${gColor};color:${gColor}" onclick="togglePCSrc('Gartner',this)"><span class="atdot" style="background:${gColor}"></span>Gartner</div>`+
+    `<div class="atog" style="border-color:${avgColor};color:${avgColor};opacity:.6;cursor:default"><span class="atdot" style="background:${avgColor}"></span>Average</div>`;
+
+  const ctx=document.getElementById('pc-chart').getContext('2d');
+  if(charts.pc)charts.pc.destroy();
+
+  const chartDatasets=[];
+  if(!tiHidden&&Object.keys(tiVals).length)chartDatasets.push({label:'TechInsights',data:years.map(y=>tiVals[y]||null),borderColor:tiColor,backgroundColor:tiColor+'18',borderWidth:2,pointRadius:4,pointBackgroundColor:tiColor,tension:.3,spanGaps:true,fill:false});
+  if(!gHidden&&Object.keys(gVals).length)chartDatasets.push({label:'Gartner',data:years.map(y=>gVals[y]||null),borderColor:gColor,backgroundColor:gColor+'18',borderWidth:2,pointRadius:4,pointBackgroundColor:gColor,tension:.3,spanGaps:true,fill:false});
+
+  // Average line
+  const avgData=years.map(y=>{const vals=[];if(!tiHidden&&tiVals[y])vals.push(tiVals[y]);if(!gHidden&&gVals[y])vals.push(gVals[y]);return vals.length?vals.reduce((a,b)=>a+b)/vals.length:null;});
+  if(avgData.some(v=>v!==null))chartDatasets.push({label:'Average',data:avgData,borderColor:avgColor,backgroundColor:'transparent',borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:avgColor,tension:.3,spanGaps:true,fill:false});
+
+  charts.pc=new Chart(ctx,{type:'line',data:{labels:years,datasets:chartDatasets},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:10,padding:12}},title:{display:true,text:seg,font:{size:12},color:'#1A1033',padding:{bottom:8}}},
+      scales:{y:{ticks:{font:{size:10},callback:v=>`$${(v/1000).toFixed(1)}B`},grid:{color:'rgba(107,33,214,.06)'},border:{display:false}},x:{ticks:{font:{size:10}},grid:{display:false},border:{display:false}}}}});
+
+  // Table
+  let html=`<table class="dt"><thead><tr><th>Source</th>${years.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
+  if(!tiHidden&&Object.keys(tiVals).length)html+=`<tr><td><span class="src-dot" style="background:${tiColor}"></span>TechInsights</td>${years.map(y=>`<td>${tiVals[y]?'$'+(tiVals[y]/1000).toFixed(1)+'B':'—'}</td>`).join('')}</tr>`;
+  if(!gHidden&&Object.keys(gVals).length)html+=`<tr><td><span class="src-dot" style="background:${gColor}"></span>Gartner</td>${years.map(y=>`<td>${gVals[y]?'$'+(gVals[y]/1000).toFixed(1)+'B':'—'}</td>`).join('')}</tr>`;
+  const avgRow=avgData.map((v,i)=>v?'$'+(v/1000).toFixed(1)+'B':'—');
+  html+=`<tr style="font-weight:600;background:var(--bullbg)"><td><span class="src-dot" style="background:${avgColor}"></span>Average</td>${avgRow.map(v=>`<td>${v}</td>`).join('')}</tr>`;
+  html+='</tbody></table>';
+  document.getElementById('pc-table').innerHTML=html;
+}
+
+function togglePCSrc(src,el){
+  if(hidden.pc.has(src))hidden.pc.delete(src);else hidden.pc.add(src);
+  el.classList.toggle('off');drawPC();
+}
+
+/* ── DOWNLOADS ── */
+function downloadChart(cat){
+  const id=cat==='pc'?'pc':'wfe capex revenue'.includes(cat)?cat:cat;
+  const canvas=document.getElementById(`${id}-chart`);
+  const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download=`nova_${cat}.png`;a.click();
+}
+function downloadCSV(cat){
+  if(cat==='pc'){
+    const seg=document.getElementById('pcSegment').value;
+    const tiVals=pcData.ti[seg]||{};const gVals=pcData.gartner[seg]||{};
+    const years=[...new Set([...Object.keys(tiVals),...Object.keys(gVals)])].sort();
+    let csv=`Segment: ${seg}\nSource,${years.join(',')}\n`;
+    if(Object.keys(tiVals).length)csv+=`TechInsights,${years.map(y=>tiVals[y]||'').join(',')}\n`;
+    if(Object.keys(gVals).length)csv+=`Gartner,${years.map(y=>gVals[y]||'').join(',')}\n`;
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`nova_process_control.csv`;a.click();return;
+  }
+  const data=datasets[cat];const srcs=Object.keys(data).filter(s=>!hidden[cat].has(s));const years=getYears(cat);
+  let csv=`Source,${years.join(',')}\n`;srcs.forEach(s=>{csv+=`${s},${years.map(y=>data[s]&&data[s][y]||'').join(',')}\n`;});
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`nova_${cat}.csv`;a.click();
+}
+
+/* ── ANALYST CARDS ── */
+function buildAnalystCards(srcs,files){
+  const el=document.getElementById('aCards');
+  if(!srcs.size){el.innerHTML='<div class="na-msg">No sources</div>';return;}
+  el.innerHTML=[...srcs].sort().map(s=>{
+    const sf=files.filter(f=>guessSource(f.name)===s);
+    const latest=sf.sort((a,b)=>new Date(b.modifiedTime)-new Date(a.modifiedTime))[0];
+    const date=latest?new Date(latest.modifiedTime).toLocaleDateString('en-GB',{month:'short',year:'numeric'}):'—';
+    const stale=latest&&isStale(latest.modifiedTime);
+    const col=clr(s);
+    return`<div class="acard"><div class="ac-top"><span class="ac-name">${s}</span><span class="ac-dot" style="background:${col}"></span></div><div class="ac-spec">${SRC_SPEC[s]||'Research'}</div><div class="ac-date">${date}${stale?' <span class="stale-lbl">⚠ >6mo</span>':''}</div><div class="ac-sum">${sf.length} file${sf.length>1?'s':''}</div><div class="ac-stars">★★★★☆</div></div>`;
+  }).join('');
+}
+
+/* ── FILE LIST ── */
+function renderFileList(files){
+  document.getElementById('fileList').innerHTML=files.map(f=>{
+    const ext=(f.name.split('.').pop()||'').toLowerCase();const s=guessSource(f.name);
+    const date=f.modifiedTime?new Date(f.modifiedTime).toLocaleDateString('en-GB'):'';
+    const size=f.size?(f.size>1048576?(f.size/1048576).toFixed(1)+'MB':Math.round(f.size/1024)+'KB'):'';
+    const stale=isStale(f.modifiedTime);
+    const bc=['xlsx','xlsm','xls'].includes(ext)?'#ECFDF5;color:#065F46':ext==='pptx'?'#FEF3C7;color:#92400E':'#F5F0FF;color:#6B21D6';
+    const ic=['xlsx','xlsm','xls'].includes(ext)?'ti-file-spreadsheet':ext==='pptx'?'ti-presentation':'ti-file';
+    return`<div style="background:${stale?'#FEF2F2':'var(--bg)'};border-radius:var(--r6);padding:9px 11px;display:flex;align-items:flex-start;gap:9px;border:1px solid ${stale?'rgba(220,38,38,.15)':'transparent'};"><i class="ti ${ic}" style="font-size:16px;color:${stale?'var(--bear)':'var(--p)'};flex-shrink:0;"></i><div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${stale?'color:var(--t3);text-decoration:line-through;':''}" title="${f.name}">${f.name}</div><div style="font-size:10px;color:var(--t3);margin-top:1px;">${s} · ${date}${size?' · '+size:''}${stale?' · <span style="color:var(--bear);font-weight:600;">excluded (>6mo)</span>':''}</div><span style="font-size:9px;padding:2px 6px;border-radius:3px;font-weight:600;margin-top:4px;display:inline-block;background:${bc}">${ext.toUpperCase()}</span></div></div>`;
+  }).join('');
+}
+
+/* ── TAKEAWAYS ── */
+async function generateTakeaways(){
+  if(!allFiles.length){document.getElementById('twList').innerHTML='<div class="na-msg">No files indexed yet.</div>';return;}
+  // Only use files from last 6 months
+  const recentFiles=allFiles.filter(f=>!isVeryStale(f.modifiedTime));
+  if(!recentFiles.length){document.getElementById('twList').innerHTML='<div class="na-msg">All indexed files are older than 6 months and excluded from analysis.</div>';return;}
+  document.getElementById('twList').innerHTML='<div class="na-msg"><i class="ti ti-loader spin"></i> Generating takeaways from recent reports...</div>';
+  const flist=recentFiles.slice(0,20).map(f=>`${f.name} [${guessSource(f.name)}] (${new Date(f.modifiedTime).toLocaleDateString('en-GB')})`).join('\n');
+  try{
+    const r=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,
+        system:'You are Nova Measuring Instruments market intelligence engine. Generate exactly 5 executive takeaways from RECENT reports only (last 6 months). Focus on current and forward-looking insights. Rules: 1 sentence max 25 words. Sort by Nova relevance. Include source name and a plausible report URL or Drive link hint in brackets. Respond ONLY with JSON array [{text,score,src,url}] score=3/4/5. No markdown.',
+        messages:[{role:'user',content:`Recent files (last 6 months):\n${flist}\n\nGenerate 5 forward-looking executive takeaways.`}]})});
+    const d=await r.json();const raw=d.content?.find(b=>b.type==='text')?.text||'[]';
+    let items;try{items=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch{items=null;}
+    if(!items?.length){document.getElementById('twList').innerHTML='<div class="na-msg">Could not generate takeaways.</div>';return;}
+    document.getElementById('twList').innerHTML=items.map(t=>{
+      const cls=t.score===5?'s5':t.score===4?'s4':'s3';
+      const srcEl=t.url?`<a href="${t.url}" target="_blank" class="stag-link">${t.src||'Source'} ↗</a>`:`<span class="stag">${t.src||''}</span>`;
+      return`<div class="tw-row"><span class="tw-arr">▶</span><span class="tw-txt">${t.text}</span><div class="tw-tags"><span class="sbadge ${cls}">Score ${t.score}</span>${srcEl}</div></div>`;
+    }).join('');
+  }catch(e){document.getElementById('twList').innerHTML='<div class="na-msg">Error generating takeaways.</div>';}
+}
+
+/* ── COPILOT ── */
+const CHIPS={general:['WFE forecast 2025?','Most bullish source?','Biggest trend?'],nova:['Nova implications?','Advanced packaging demand?','Process control trends?'],sales:['Talking points for TSMC?','AI packaging narrative?','Position vs KLA?'],risk:['Key risks 2025?','China WFE risk?','Memory uncertainty?'],compare:['Compare all sources on WFE?','Most bullish on packaging?','Biggest disagreements?']};
+const MODEPR={general:'Answer directly based on available reports.',nova:'Focus on implications for Nova: optical metrology, process control, packaging inspection.',sales:'Provide talking points for Nova sales engineers.',risk:'Focus on risks. Rank by severity.',compare:'Compare sources. Highlight agreements and disagreements.'};
+function setMode(m,btn){qaMode=m;document.querySelectorAll('.mt').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.getElementById('chips').innerHTML=(CHIPS[m]||[]).map(q=>`<span class="chip" onclick="document.getElementById('qaIn').value='${q}'">${q}</span>`).join('');}
+window.addEventListener('DOMContentLoaded',()=>{document.getElementById('chips').innerHTML=(CHIPS.general||[]).map(q=>`<span class="chip" onclick="document.getElementById('qaIn').value='${q}'">${q}</span>`).join('');});
+async function askQ(){
+  const q=document.getElementById('qaIn').value.trim();if(!q)return;
+  const out=document.getElementById('qaOut');out.innerHTML='<div class="qa-ans"><i class="ti ti-loader spin"></i> Analyzing...</div>';
+  const recentFiles=allFiles.filter(f=>!isVeryStale(f.modifiedTime));
+  const flist=(recentFiles.length?recentFiles:allFiles).slice(0,20).map(f=>`${f.name} [${guessSource(f.name)}]`).join('\n');
+  try{
+    const r=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,
+        system:`Nova Measuring Instruments market intelligence. ${MODEPR[qaMode]||''} Prioritize recent reports. Cite sources. Be concise.`,
+        messages:[{role:'user',content:`Reports:\n${flist}\n\nQuestion: ${q}`}]})});
+    const d=await r.json();const text=d.content?.find(b=>b.type==='text')?.text||'No answer.';
+    const srcs=[...new Set(allFiles.map(f=>guessSource(f.name)))].join(', ');
+    out.innerHTML=`<div class="qa-ans">${text.replace(/\n/g,'<br>')}<div class="qa-src">Sources: ${srcs}</div></div>`;
+  }catch(e){out.innerHTML='<div class="qa-ans">Connection error.</div>';}
+}
+
+/* ── MISC ── */
+function showCat(cat,tab){document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.cat-panel').forEach(p=>p.classList.remove('active'));tab.classList.add('active');document.getElementById('panel-'+cat).classList.add('active');if(cat==='marketsignals'&&typeof initMarketSignals==='function')initMarketSignals();}
+function prog(show,label,pct){document.getElementById('progWrap').style.display=show?'block':'none';if(show){document.getElementById('progLbl').textContent=label;document.getElementById('progBar').style.width=pct+'%';}}
+function doSync(){if(!tok){initiateAuth();return;}loadFiles();}
+/* ══════════════════════════════════════════════
+   MARKET SIGNALS — EDGAR + Claude API
+══════════════════════════════════════════════ */
+
+const MS_COMPANIES=[
+  // Customers
+  {ticker:'TSM', name:'TSMC',               type:'customer',  cik:'0001046179', ir:'https://investor.tsmc.com/english', transcript:'https://seekingalpha.com/symbol/TSM/earnings/transcripts'},
+  {ticker:'INTC',name:'Intel',              type:'customer',  cik:'0000050863', ir:'https://www.intc.com/investor-relations', transcript:'https://seekingalpha.com/symbol/INTC/earnings/transcripts'},
+  {ticker:'MU',  name:'Micron',             type:'customer',  cik:'0000723125', ir:'https://investors.micron.com',          transcript:'https://seekingalpha.com/symbol/MU/earnings/transcripts'},
+  {ticker:'QCOM',name:'Qualcomm',           type:'customer',  cik:'0000804328', ir:'https://investor.qualcomm.com',         transcript:'https://seekingalpha.com/symbol/QCOM/earnings/transcripts'},
+  {ticker:'NVDA',name:'Nvidia',             type:'customer',  cik:'0001045810', ir:'https://investor.nvidia.com',           transcript:'https://seekingalpha.com/symbol/NVDA/earnings/transcripts'},
+  {ticker:'SSNLF',name:'Samsung',           type:'customer',  cik:null, note:'KRX listed', ir:'https://www.samsung.com/global/ir/', transcript:'https://seekingalpha.com/symbol/SSNLF/earnings/transcripts'},
+  {ticker:'HXSCL',name:'SK Hynix',          type:'customer',  cik:null, note:'KRX listed', ir:'https://www.skhynix.com/ir/', transcript:null},
+  {ticker:'SMH',  name:'SMIC',              type:'customer',  cik:null, note:'HKEx listed', ir:'https://www.smics.com/en/site/company_ir', transcript:null},
+  // Competitors
+  {ticker:'AMAT',name:'Applied Materials',  type:'competitor',cik:'0000796343', ir:'https://ir.appliedmaterials.com',       transcript:null},
+  {ticker:'KLAC',name:'KLA',                type:'competitor',cik:'0000319201', ir:'https://ir.kla.com',                    transcript:'https://seekingalpha.com/symbol/AMAT/earnings/transcripts'},
+  {ticker:'ONTO',name:'Onto Innovation',    type:'competitor',cik:'0001113232', ir:'https://ir.ontoinnovation.com',          transcript:'https://seekingalpha.com/symbol/KLAC/earnings/transcripts'},
+  {ticker:'TER', name:'Teradyne',           type:'competitor',cik:'0000097210', ir:'https://ir.teradyne.com',               transcript:'https://seekingalpha.com/symbol/ONTO/earnings/transcripts'},
+  {ticker:'ASML',name:'ASML',               type:'competitor',cik:'0000937966', ir:'https://www.asml.com/en/investors',     transcript:'https://seekingalpha.com/symbol/TER/earnings/transcripts'},
+  {ticker:'LRCX',name:'Lam Research',       type:'competitor',cik:'0000707549', ir:'https://ir.lamresearch.com',            transcript:'https://seekingalpha.com/symbol/ASML/earnings/transcripts'},
+  {ticker:'TOELY',name:'Tokyo Electron',    type:'competitor',cik:null, note:'Tokyo listed', ir:'https://www.tel.com/ir/',  transcript:null},
+  {ticker:'HTHIY',name:'Hitachi HR',        type:'competitor',cik:null, note:'Tokyo listed', ir:'https://www.hitachi-hightech.com/global/ir/', transcript:null},
+];
+
+const MS_CACHE_KEY='nova_ms_cache_v1';
+const CO_CACHE_TTL=6*60*60*1000; // 6 hours
+const MS_CACHE_TTL=24*60*60*1000;
+const ANGLE_ICON={capex:'ti-chart-bar',metrology:'ti-microscope',packaging:'ti-box',competitive:'ti-swords',risk:'ti-alert-triangle',technology:'ti-cpu'};
+const ANGLE_COLOR={capex:'#059669',metrology:'#6B21D6',packaging:'#D97706',competitive:'#DC2626',risk:'#B45309',technology:'#2D6BA0'};
+let msInited=false;
+
+/* ── INIT ── */
+function initMarketSignals(){
+  if(msInited)return; msInited=true;
+  buildCoGrid(); loadNovaFeed(false);
+}
+
+function buildCoGrid(){
+  document.getElementById('coGrid').innerHTML=MS_COMPANIES.map(c=>
+    `<button class="co-btn ${c.type}" onclick="loadCompanyDetail('${c.ticker}')">${c.ticker}<br><span style="font-size:8px;opacity:.8">${c.name}</span></button>`
+  ).join('');
+}
+
+/* ── FINNHUB ── */
+// API keys stored securely in Cloudflare Worker
+
+async function finnhubFetch(path){
+  try{
+    const r=await fetch(`${WORKER_URL}/finnhub?path=${encodeURIComponent(path)}`);
+    if(!r.ok)return null;
+    return await r.json();
+  }catch{return null;}
+}
+
+async function edgarFetch(ticker,forms,count){
+  try{
+    const [news,earnings]=await Promise.all([
+      finnhubFetch(`/company-news?symbol=${ticker}&from=${getFromDate(180)}&to=${getToDate()}`),
+      finnhubFetch(`/stock/earnings?symbol=${ticker}&limit=4`)
+    ]);
+    const out=[];
+    if(earnings?.length){
+      earnings.slice(0,count).forEach(e=>{
+        const date=e.date||e.period||'';
+        const rev=e.revenue?`$${(e.revenue/1e9).toFixed(1)}B`:'N/A';
+        out.push({form:'Earnings',date,accession:'',description:'',
+          summary:`Q${e.quarter||'?'} ${e.year||''}: EPS ${e.actual??'—'} vs est ${e.estimate??'—'} (surprise ${e.surprisePercent!=null?e.surprisePercent.toFixed(1)+'%':'N/A'}), revenue ${rev}`});
+      });
+    }
+    if(news?.length){
+      news.slice(0,2).forEach(n=>{
+        out.push({form:'News',date:new Date(n.datetime*1000).toISOString().split('T')[0],
+          accession:'',description:n.url||'',summary:n.headline});
+      });
+    }
+    return out.slice(0,count+3);
+  }catch(e){console.log('edgarFetch error',ticker,e);return[];}
+}
+
+async function fetchFilingText(ticker){
+  // Try real transcript first
+  try{
+    const r=await fetch(`${WORKER_URL}/transcript?ticker=${ticker}`);
+    if(r.ok){
+      const d=await r.json();
+      if(d.text&&d.text.length>200){
+        return {type:'transcript',text:d.text,url:d.url};
+      }
+    }
+  }catch{}
+  // Fallback to Finnhub earnings numbers
+  try{
+    const data=await finnhubFetch(`/stock/earnings?symbol=${ticker}&limit=1`);
+    if(!data?.length)return null;
+    const e=data[0];
+    return {type:'earnings',text:`Earnings call ${e.period||''}: EPS actual ${e.actual??'N/A'} vs estimate ${e.estimate??'N/A'}. Revenue: ${e.revenue??'N/A'}. Surprise: ${e.surprisePercent!=null?(e.surprisePercent.toFixed(1)+'%'):'N/A'}.`,url:null};
+  }catch{return null;}
+}
+
+function getFromDate(days){const d=new Date();d.setDate(d.getDate()-days);return d.toISOString().split('T')[0];}
+function getToDate(){return new Date().toISOString().split('T')[0];}
+
+/* ── NOVA FEED ── */
+async function loadNovaFeed(forceRefresh){
+  const el=document.getElementById('novaFeed');
+  const noteEl=document.getElementById('feedCacheNote');
+  if(!forceRefresh){
+    try{
+      const c=JSON.parse(localStorage.getItem(MS_CACHE_KEY)||'null');
+      if(c&&(Date.now()-c.ts)<MS_CACHE_TTL){renderNovaFeed(c.insights);noteEl.textContent=`Cached ${new Date(c.ts).toLocaleDateString('en-GB')}`;return;}
+    }catch{}
+  }
+  el.innerHTML='<div class="ms-loading"><i class="ti ti-loader spin"></i> Fetching SEC EDGAR filings...</div>';
+  noteEl.textContent='';
+  const usCos=MS_COMPANIES.filter(c=>c.ticker&&!c.note?.includes("KRX")&&!c.note?.includes("Tokyo"));
+  let allFilings=[];
+  for(const co of usCos.slice(0,7)){
+    const filings=await edgarFetch(co.ticker,['8-K','10-Q','20-F'],2);
+    filings.forEach(f=>allFilings.push({...f,company:co.name,ticker:co.ticker,coType:co.type}));
+    await new Promise(r=>setTimeout(r,250));
+  }
+  console.log('allFilings count:',allFilings.length, JSON.stringify(allFilings.slice(0,2)));
+  if(!allFilings.length){el.innerHTML='<div class="ms-err"><i class="ti ti-alert-triangle"></i> Could not reach SEC EDGAR. Check network.</div>';return;}
+  el.innerHTML='<div class="ms-loading"><i class="ti ti-loader spin"></i> Analyzing with Claude AI...</div>';
+  const filingSummary=allFilings.slice(0,15).map(f=>`${f.company} (${f.ticker}, ${f.coType}) — ${f.form} ${f.date}${f.summary?" | "+f.summary:""}`).join('\n');
+  try{
+    const r=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,
+        system:'You are Nova Ltd. (Israeli semiconductor metrology — optical CD, overlay, film) market intelligence. Given recent SEC filings from customers and competitors, generate 6 insights ranked by Nova relevance. Nova cares about: capex guidance, process control spending, node transitions, packaging trends, competitive moves. Rules: each insight max 30 words, forward-looking. Score 5=critical,4=important,3=watch. Respond ONLY with JSON array: [{text,score,company,ticker,coType,form,date,angle}] angle=capex|metrology|packaging|competitive|risk|technology. No markdown.',
+        messages:[{role:'user',content:`Recent filings:\n${filingSummary}\n\nGenerate 6 Nova-relevant insights.`}]})});
+    const d=await r.json();
+    const raw=d.content?.find(b=>b.type==='text')?.text||'[]';
+    console.log('RAW NOVA FEED:',raw.substring(0,500));
+    let insights; try{insights=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch(e){console.log('PARSE ERROR:',e.message,raw.substring(0,200));insights=null;}
+    if(!insights?.length){el.innerHTML='<div class="ms-err">Could not parse AI response. Try refreshing.</div>';return;}
+    try{localStorage.setItem(MS_CACHE_KEY,JSON.stringify({ts:Date.now(),insights}));}catch{}
+    noteEl.textContent=`Updated ${new Date().toLocaleDateString('en-GB')}`;
+    renderNovaFeed(insights);
+  }catch(e){el.innerHTML=`<div class="ms-err"><i class="ti ti-alert-triangle"></i> Error: ${e.message}</div>`;}
+}
+
+function renderNovaFeed(insights){
+  const el=document.getElementById('novaFeed');
+  if(!insights?.length){el.innerHTML='<div class="na-msg">No insights.</div>';return;}
+  const sorted=[...insights].sort((a,b)=>b.score-a.score);
+  el.innerHTML=`<div class="ms-feed">${sorted.map(ins=>{
+    const lvl=ins.score===5?'nova-high':ins.score===4?'nova-med':'nova-low';
+    const scoreBg=ins.score===5?'background:var(--grad)':ins.score===4?'background:linear-gradient(135deg,#A855F7,#7C3AED)':'background:var(--b2);color:var(--t2)';
+    const icon=ANGLE_ICON[ins.angle]||'ti-trending-up';
+    const col=ANGLE_COLOR[ins.angle]||'#6B21D6';
+    const cotypeCls=ins.coType==='customer'?'customer':'competitor';
+    const relCls=ins.score===5?'high':ins.score===4?'med':'low';
+    return`<div class="ms-insight ${lvl}">
+      <div class="ms-score" style="${scoreBg}">${ins.score}</div>
+      <div class="ms-body">
+        <div class="ms-text"><i class="ti ${icon}" style="color:${col};margin-right:4px;font-size:11px;"></i>${ins.text}</div>
+        <div class="ms-meta">
+          <span class="ms-company ${cotypeCls}">${ins.ticker||ins.company}</span>
+          <span class="ms-src">${ins.form||'Filing'}</span>
+          <span class="ms-date">${ins.date||''}</span>
+          <span class="ms-relevance ${relCls}">${ins.angle||''}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* ── COMPANY DEEP DIVE ── */
+
+async function getStockQuote(ticker){
+  try{
+    const [quote,profile]=await Promise.all([
+      finnhubFetch(`/quote?symbol=${ticker}`),
+      finnhubFetch(`/stock/profile2?symbol=${ticker}`)
+    ]);
+    return {quote,profile};
+  }catch{return null;}
+}
+
+async function loadCompanyDetail(ticker){
+  document.querySelectorAll('.co-btn').forEach(b=>{b.classList.remove('active');if(b.textContent.trim().startsWith(ticker))b.classList.add('active');});
+  const co=MS_COMPANIES.find(c=>c.ticker===ticker);
+  const el=document.getElementById('coDetail');
+  if(!co){el.innerHTML='<div class="na-msg">Company not found</div>';return;}
+
+  // Check cache first
+  const coCacheKey=`nova_co_${co.ticker}_v1`;
+  const forceRefresh=arguments[1]===true;
+  if(!forceRefresh){
+    try{
+      const cached=JSON.parse(localStorage.getItem(coCacheKey)||'null');
+      if(cached&&(Date.now()-cached.ts)<CO_CACHE_TTL){
+        el.innerHTML=cached.html;
+        return;
+      }
+    }catch{}
+  }
+
+  const progressHtml=(s1,s2,s3)=>`<div class="co-progress">
+    <div class="co-prog-step ${s1}"><div class="co-prog-dot"></div>Market data</div>
+    <div class="co-prog-sep"></div>
+    <div class="co-prog-step ${s2}"><div class="co-prog-dot"></div>Transcript</div>
+    <div class="co-prog-sep"></div>
+    <div class="co-prog-step ${s3}"><div class="co-prog-dot"></div>AI analysis</div>
+  </div>`;
+
+  el.innerHTML=`<div class="co-detail"><div class="co-detail-header"><div><span class="co-detail-name">${co.name}</span></div></div>${progressHtml('active','','')}</div>`;
+
+  // Step 1: fast data — stock + filings in parallel
+  const [filings, stockData] = await Promise.all([
+    co.cik ? edgarFetch(co.ticker,['8-K','10-Q','20-F','10-K'],5) : edgarFetch(co.ticker,[],4),
+    !co.note ? getStockQuote(co.ticker) : Promise.resolve(null)
+  ]);
+
+  const latest = filings[0];
+  const cotypeCls2=co.type==='customer'?'customer':'competitor';
+
+  // Show stock immediately while fetching transcript + Claude
+  const stockHtmlEarly = stockData?.quote?.c>0 ? (() => {
+    const q=stockData.quote;
+    const chg=(q.c-q.pc).toFixed(2);
+    const chgPct=((q.c-q.pc)/q.pc*100).toFixed(2);
+    const up=chg>=0;
+    const mcap=stockData.profile?.marketCapitalization?(stockData.profile.marketCapitalization/1000).toFixed(1)+'B':'—';
+    return `<div class="co-stock-row">
+      <div><div class="co-stock-price">$${q.c.toFixed(2)}</div><div class="co-stock-meta">Market Cap: $${mcap}</div></div>
+      <span class="co-stock-change ${up?'co-stock-up':'co-stock-dn'}">${up?'+':''}${chg} (${up?'+':''}${chgPct}%)</span>
+      <div class="co-stock-meta">H: $${q.h?.toFixed(2)||'—'} · L: $${q.l?.toFixed(2)||'—'}</div>
+    </div>`;
+  })() : (co.note?`<div style="font-size:10px;color:var(--t3);padding:6px 0;">${co.note}</div>`:'');
+
+  el.innerHTML=`<div class="co-detail">
+    <div class="co-detail-header">
+      <div><span class="co-detail-name">${co.name}</span><span class="co-detail-type ${cotypeCls2}" style="margin-left:8px;">${co.type}</span></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;color:var(--t3);">${filings.length} signals</span>
+        <button onclick="loadCompanyDetail('${co.ticker}',true)" style="font-size:9px;padding:2px 8px;border-radius:4px;border:1px solid var(--b2);background:var(--bg);color:var(--t3);cursor:pointer;font-family:inherit;"><i class="ti ti-refresh"></i></button>
+      </div>
+    </div>
+    ${stockHtmlEarly}
+    ${progressHtml('done','active','')}
+    <div id="co-analysis-${co.ticker}" style="margin-top:8px;"></div>
+  </div>`;
+
+  // Step 2: transcript + Claude in parallel
+  const [filingResult] = await Promise.all([
+    fetchFilingText(co.ticker)
+  ]);
+  const filingText = filingResult?.text||null;
+  const transcriptUrl = filingResult?.url||co.transcript||null;
+  const hasRealTranscript = filingResult?.type==='transcript';
+  const filingList = filings.map(f=>`${f.form} — ${f.date}${f.summary?' | '+f.summary:''}`).join('\n');
+
+  let result=null;
+  try{
+    const r=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1800,
+        system:`You are Nova Ltd. (Israeli semiconductor metrology — optical CD, overlay, film) market intelligence. Analyze for ${co.name} (${co.type} of Nova).
+Extract:
+1. summary: 2 sentences on current business state
+2. novaScore: 1-10. For CUSTOMERS: urgency of Nova sales opportunity (10=buy now signal). For COMPETITORS: threat level to Nova (10=high threat, winning deals away from Nova).
+3. novaScoreReason: 1 sentence explaining the score from Nova's perspective
+4. heatLevel: "hot"|"warm"|"cool". For competitors: hot=serious threat, cool=low threat.
+5. points: 4 objects {type,text,novaAngle} type=capex|metrology|technology|risk|competitive
+6. salesTriggers: array of short signals (max 3). For customers: purchase signals. For competitors: competitive risk signals (e.g. "gaining metrology market share", "new process control product").
+7. transcriptSummary: 2-3 sentence summary from Nova's perspective — for competitors, focus on competitive threats and market positioning.
+Respond ONLY with JSON. No markdown.`,
+        messages:[{role:'user',content:`Company: ${co.name} (${co.type})\nFilings:\n${filingList}${filingText?'\n\nEarnings context: '+filingText:''}\n\nExtract Nova intelligence.`}]})});
+    const d=await r.json();
+    const raw=d.content?.find(b=>b.type==='text')?.text||'{}';
+    try{result=JSON.parse(raw.replace(/\`\`\`json|\`\`\`/g,'').trim());}catch{result=null;}
+  }catch(e){console.log('Claude error',e);}
+
+  const cotypeCls=co.type==='customer'?'customer':'competitor';
+  const score=result?.novaScore||5;
+  const isComp=co.type==='competitor';
+  const heatCls=result?.heatLevel==='hot'?'score-hot':result?.heatLevel==='warm'?'score-warm':'score-cool';
+  const heatLabel=isComp
+    ?(result?.heatLevel==='hot'?'🚨 High threat':result?.heatLevel==='warm'?'⚠️ Monitor threat':'✅ Low threat')
+    :(result?.heatLevel==='hot'?'🔥 Hot opportunity':result?.heatLevel==='warm'?'⚡ Watch closely':'❄️ Monitor');
+
+  // Stock already rendered above
+
+  // Source links
+  const edgar_url=co.cik?`https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${co.cik}&type=10-K`:null;
+  const latest_filing_url=latest?.accession&&co.cik?`https://www.sec.gov/Archives/edgar/data/${parseInt(co.cik)}/${latest.accession.replace(/-/g,'')}/`+latest.description:null;
+  const sourcesHtml=`<div class="co-sources">
+    ${co.ir?`<a href="${co.ir}" target="_blank" class="co-src-btn"><i class="ti ti-building"></i> Investor Relations</a>`:''}
+    ${co.transcript?`<a href="${co.transcript}" target="_blank" class="co-src-btn"><i class="ti ti-microphone"></i> Earnings Calls</a>`:''}
+    ${edgar_url?`<a href="${edgar_url}" target="_blank" class="co-src-btn"><i class="ti ti-file-text"></i> SEC Filings</a>`:''}
+    <a href="https://seekingalpha.com/symbol/${co.ticker}/earnings/transcripts" target="_blank" class="co-src-btn"><i class="ti ti-news"></i> SA Transcripts</a>
+    <a href="https://finance.yahoo.com/quote/${co.ticker}" target="_blank" class="co-src-btn"><i class="ti ti-chart-candle"></i> Yahoo Finance</a>
+  </div>`;
+
+  // Sales triggers
+  const triggersHtml=result?.salesTriggers?.length?`
+    <div style="margin-top:10px;padding:10px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:var(--r10);">
+      <div style="font-size:10px;font-weight:700;color:#92400E;margin-bottom:6px;"><i class="ti ti-target"></i> ${co.type==='competitor'?'Competitive Risk Signals':'Nova Sales Triggers Detected'}</div>
+      <div>${result.salesTriggers.map(t=>`<span class="trigger-badge"><i class="ti ti-alert-circle"></i>${t}</span>`).join('')}</div>
+    </div>`:'';
+
+  // Transcript summary
+  const transcriptHtml=result?.transcriptSummary?`
+    <div class="transcript-box">
+      <div class="transcript-header">
+        <span class="transcript-title"><i class="ti ti-microphone" style="color:var(--p)"></i> Earnings Call — Nova Perspective ${hasRealTranscript?'<span style=\"font-size:9px;background:var(--bullbg);color:var(--bull);padding:2px 7px;border-radius:99px;margin-left:4px;font-weight:600;\">✓ Full Transcript</span>':'<span style=\"font-size:9px;background:var(--neubg);color:var(--neu);padding:2px 7px;border-radius:99px;margin-left:4px;\">Estimated</span>'}</span>
+        ${transcriptUrl?`<a href="${transcriptUrl}" target="_blank" class="transcript-fetch-btn">Read Transcript ↗</a>`:''}
+      </div>
+      <div class="transcript-content">${result.transcriptSummary}</div>
+    </div>`:'';
+
+  const analysisEl=document.getElementById(`co-analysis-${co.ticker}`);
+  if(!analysisEl){el.innerHTML='<div class="ms-err">Render error</div>';return;}
+  // Update progress to step 3 done
+  const progEl=el.querySelector('.co-progress');
+  if(progEl)progEl.innerHTML=progressHtml('done','done','done').match(/<div class="co-progress">([\s\S]*)<\/div>/)?.[1]||'';
+  analysisEl.innerHTML=`
+    <div class="nova-score-bar" style="${co.type==='competitor'?'background:var(--bearbg);border:1px solid rgba(220,38,38,.15)':''}">
+      <div class="nova-score-num" style="${co.type==='competitor'?'color:var(--bear)':''}">${score}</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span style="font-size:10px;font-weight:600;color:var(--t1);">${co.type==='competitor'?'Competitive Threat Level':'Nova Opportunity Score'}</span>
+          <span class="nova-score-badge ${heatCls}">${heatLabel}</span>
+        </div>
+        <div class="nova-score-heat"><div class="nova-score-fill" style="width:${score*10}%;${co.type==='competitor'?'background:linear-gradient(135deg,#DC2626,#F87171)':''}"></div></div>
+        <div style="font-size:10px;color:var(--t2);margin-top:4px;">${result?.novaScoreReason||''}</div>
+      </div>
+    </div>
+
+    ${sourcesHtml}
+    ${triggersHtml}
+
+    <div style="font-size:12px;line-height:1.7;color:var(--t2);margin:10px 0;padding:10px 12px;background:var(--bg);border-radius:var(--r6);">${result?.summary||'Analysis unavailable.'}</div>
+
+    ${(result?.points||[]).map(p=>{
+      const icon=ANGLE_ICON[p.type]||'ti-trending-up';
+      const col=ANGLE_COLOR[p.type]||'#6B21D6';
+      return`<div class="co-filing-row">
+        <span class="co-filing-type"><i class="ti ${icon}" style="color:${col}"></i> ${p.type}</span>
+        <div class="co-filing-quote">${p.text}<div style="font-size:10px;color:var(--p);margin-top:4px;font-style:italic;">→ ${p.novaAngle}</div></div>
+        <div class="co-filing-meta">${latest?.date||''}</div>
+      </div>`;
+    }).join('')}
+
+    ${transcriptHtml}
+
+    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--b1);font-size:10px;color:var(--t3);">
+      Signals: ${filings.slice(0,6).map(f=>`<span style="color:var(--t2);">${f.form} ${f.date}</span>`).join(' · ')}
+    </div>
+  </div>`;
+}
+
+</script>
+</body>
+</html>
