@@ -691,12 +691,24 @@ async function parseFiles(files,forceRefresh){
     }
     try{
       const isPdf=f.name.match(/\.pdf$/i);
+      // snapshot datasets before parse
+      const snapBefore={
+        wfe:JSON.parse(JSON.stringify(datasets.wfe)),
+        capex:JSON.parse(JSON.stringify(datasets.capex)),
+        revenue:JSON.parse(JSON.stringify(datasets.revenue)),
+        pcTi:JSON.parse(JSON.stringify(pcData.ti)),
+        pcGartner:JSON.parse(JSON.stringify(pcData.gartner))
+      };
       let res;
       if(isPdf){res=await parsePDF(f);}
       else{res=await parseExcel(f);}
-      // snapshot what this file contributed
+      // compute delta (what this file added)
       const snap={found:res.found,cats:res.cats,wfe:{},capex:{},revenue:{},pcTi:{},pcGartner:{}};
-      // we re-parse to get the delta — simpler: store snapshot of datasets before/after
+      Object.keys(datasets.wfe).forEach(k=>{if(!snapBefore.wfe[k])snap.wfe[k]=datasets.wfe[k];});
+      Object.keys(datasets.capex).forEach(k=>{if(!snapBefore.capex[k])snap.capex[k]=datasets.capex[k];else{const diff={};Object.keys(datasets.capex[k]).forEach(y=>{if(!snapBefore.capex[k][y])diff[y]=datasets.capex[k][y];});if(Object.keys(diff).length)snap.capex[k]=diff;}});
+      Object.keys(datasets.revenue).forEach(k=>{if(!snapBefore.revenue[k])snap.revenue[k]=datasets.revenue[k];});
+      Object.keys(pcData.ti).forEach(k=>{if(!snapBefore.pcTi[k])snap.pcTi[k]=pcData.ti[k];});
+      Object.keys(pcData.gartner).forEach(k=>{if(!snapBefore.pcGartner[k])snap.pcGartner[k]=pcData.gartner[k];});
       cache[ck]=snap;
       parseLog.push({file:f.name,status:res.found?'ok':'skip',msg:res.found?`Found: ${res.cats.join(', ')}`:'No recognizable data patterns'});
     }catch(e){parseLog.push({file:f.name,status:'warn',msg:`Error: ${e.message}`});errors++;}
