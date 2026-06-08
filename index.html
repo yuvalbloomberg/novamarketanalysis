@@ -855,9 +855,8 @@ async function parseExcel(f){
 
 /* ── PARSE STATUS ── */
 function renderParseStatus(){
-  const el=document.getElementById('pslist');const sEl=document.getElementById('parseStatus');
-  if(!parseLog.length){sEl.style.display='none';return;}
-  sEl.style.display='block';
+  const el=document.getElementById('pslist');
+  if(!el||!parseLog.length)return;
   el.innerHTML=parseLog.map(p=>{
     const c=p.status==='ok'?'var(--bull)':p.status==='warn'?'var(--bear)':'var(--t3)';
     const icon=p.status==='ok'?'ti-check':p.status==='warn'?'ti-alert-triangle':'ti-minus';
