@@ -527,8 +527,13 @@ footer em{color:var(--p);font-style:normal;}
 
   <!-- FILES -->
   <div class="panel">
-    <div class="ph"><div class="ph-l"><i class="ti ti-files"></i> Files in Drive</div><div style="font-size:10px;color:var(--t3);" id="fileMeta"></div></div>
-    <div style="display:flex;flex-direction:column;gap:5px;max-height:280px;overflow-y:auto;" id="fileList"><div class="na-msg">No files loaded</div></div>
+    <details>
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;">
+        <div class="ph-l" style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;"><i class="ti ti-files" style="color:var(--p);font-size:15px;"></i> Files in Drive</div>
+        <div style="font-size:10px;color:var(--t3);" id="fileMeta"></div>
+      </summary>
+      <div style="display:flex;flex-direction:column;gap:5px;max-height:280px;overflow-y:auto;margin-top:10px;" id="fileList"><div class="na-msg">No files loaded</div></div>
+    </details>
   </div>
 
   <!-- COPILOT -->
@@ -744,7 +749,6 @@ async function parseExcel(f){
         if(isWFE&&(fu==='WAFER FAB EQUIPMENT (WFE)'||fu==='WAFER FAB EQUIPMENT'||fu==='WFE'||fu==='TOTAL WAFER FAB EQUIPENT')){const v=extractRow(row);if(v){if(!datasets.wfe[src])datasets.wfe[src]={};Object.assign(datasets.wfe[src],v);if(!cats.includes('WFE'))cats.push('WFE');}}
         if(isCapex){
           ['TSMC','Samsung','Micron','SK hynix','Intel'].forEach(co=>{if(first===co){const v=extractRow(row);if(v){const k=`${co}`;if(!datasets.capex[k])datasets.capex[k]={};Object.assign(datasets.capex[k],v);if(!cats.includes('Capex'))cats.push('Capex');}}});
-          if(fu==='TOTAL'||fu.includes('TOP 20 TOTAL')||fu==='GRAND TOTAL'){const v=extractRow(row);if(v){if(!datasets.capex[src])datasets.capex[src]={};Object.assign(datasets.capex[src],v);if(!cats.includes('Capex'))cats.push('Capex');}}
         }
         if(isRevenue&&(fu==='GRAND TOTAL'||fu==='TOTAL')){const v=extractRow(row);if(v&&Object.values(v).some(x=>x>10000)){if(!datasets.revenue[src])datasets.revenue[src]={};Object.assign(datasets.revenue[src],v);if(!cats.includes('Revenue'))cats.push('Revenue');}}
       });
