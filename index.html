@@ -344,11 +344,19 @@ footer em{color:var(--p);font-style:normal;}
     <div class="pt"><div class="pb" id="progBar" style="width:0%"></div></div>
   </div>
 
-  <div class="parse-status" id="parseStatus" style="display:none;">
-    <div class="ps-title"><i class="ti ti-info-circle"></i> Parse status</div>
-    <div class="ps-list" id="pslist"></div>
+  <div id="filesBtn" style="display:none;margin-bottom:10px;">
+    <button onclick="document.getElementById('filesModal').style.display='flex'" style="font-size:11px;padding:6px 14px;border-radius:var(--r6);border:1px solid var(--b2);background:var(--w);color:var(--t2);cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;"><i class="ti ti-files" style="color:var(--p)"></i> <span id="filesBtnLabel">0 files · 0 sources</span></button>
   </div>
-
+  <div id="filesModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:var(--w);border-radius:var(--r14);padding:20px;width:90%;max-width:700px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <span style="font-size:14px;font-weight:600;">Files in Drive</span>
+        <button onclick="document.getElementById('filesModal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--t3);">x</button>
+      </div>
+      <div id="pslist" style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;font-size:11px;"></div>
+      <div id="fileList"></div>
+    </div>
+  </div>
   <!-- CATEGORY TABS -->
   <div class="cat-tabs">
     <div class="cat-tab active" onclick="showCat('wfe',this)">
@@ -525,17 +533,6 @@ footer em{color:var(--p);font-style:normal;}
     </div>
   </div>
 
-  <!-- FILES -->
-  <div class="panel">
-    <details>
-      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;">
-        <div class="ph-l" style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;"><i class="ti ti-files" style="color:var(--p);font-size:15px;"></i> Files in Drive</div>
-        <div style="font-size:10px;color:var(--t3);" id="fileMeta"></div>
-      </summary>
-      <div style="display:flex;flex-direction:column;gap:5px;max-height:280px;overflow-y:auto;margin-top:10px;" id="fileList"><div class="na-msg">No files loaded</div></div>
-    </details>
-  </div>
-
   <!-- COPILOT -->
   <div class="panel">
     <div class="ph"><div class="ph-l"><i class="ti ti-robot"></i> AI Research Copilot</div></div>
@@ -624,7 +621,7 @@ function onToken(r){if(!r.access_token)return;tok=r.access_token;document.getEle
 async function api(url){const r=await fetch(url,{headers:{Authorization:`Bearer ${tok}`}});return r.json();}
 
 /* ── LOAD FILES ── */
-async function loadFiles(){
+async function loadFiles(forceRefresh){
   prog(true,'Searching folder...',10);
   parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};
   const s=await api(`https://www.googleapis.com/drive/v3/files?q=name='${FOLDER}' and mimeType='application/vnd.google-apps.folder'&fields=files(id,name)`);
@@ -655,24 +652,110 @@ async function loadFiles(){
   const srcs=new Set(files.map(f=>guessSource(f.name)));
   document.getElementById('mS').textContent=srcs.size;
   document.getElementById('topMeta').textContent=`${files.length} files (${files.length-activeFiles.length} excluded >6mo) · Last sync: ${new Date().toLocaleString('en-GB')}`;
-  document.getElementById('fileMeta').textContent=`${files.length} files`;
+  document.getElementById('filesBtnLabel').textContent=`${files.length} files · ${srcs.size} sources`;
+  document.getElementById('filesBtn').style.display='block';
   renderFileList(files);buildAnalystCards(srcs,files);
-  await parseFiles(files);
+  await parseFiles(files,forceRefresh);
 }
 
+/* ── PARSE CACHE ── */
+const PARSE_CACHE_KEY='nova_parse_cache_v3';
+const PARSE_CACHE_TTL=24*60*60*1000;
+
+function loadParseCache(){
+  try{const c=JSON.parse(localStorage.getItem(PARSE_CACHE_KEY)||'{}');return c;}catch{return{};}
+}
+function saveParseCache(cache){
+  try{localStorage.setItem(PARSE_CACHE_KEY,JSON.stringify(cache));}catch{}
+}
+function parseCacheKey(f){return`${f.id}_${f.modifiedTime}`;}
+
 /* ── PARSE ── */
-async function parseFiles(files){
-  const parseable=files.filter(f=>f.name.match(/\.xlsx?$|\.xlsm$/i)&&f.size&&parseInt(f.size)<55*1024*1024);
+async function parseFiles(files,forceRefresh){
+  const cache=loadParseCache();
+  const parseable=files.filter(f=>f.name.match(/\.xlsx?$|\.xlsm$|\.pdf$/i)&&f.size&&parseInt(f.size)<55*1024*1024);
   let n=0,errors=0;
   for(const f of parseable){
     prog(true,`Parsing: ${f.name.substring(0,45)}...`,20+Math.round(n/parseable.length*70));
-    try{const res=await parseExcel(f);parseLog.push({file:f.name,status:res.found?'ok':'skip',msg:res.found?`Found: ${res.cats.join(', ')}`:'No recognizable data patterns'});}
-    catch(e){parseLog.push({file:f.name,status:'warn',msg:`Error: ${e.message}`});errors++;}
+    const ck=parseCacheKey(f);
+    if(!forceRefresh&&cache[ck]){
+      // restore from cache
+      const cd=cache[ck];
+      if(cd.wfe)Object.entries(cd.wfe).forEach(([k,v])=>{if(!datasets.wfe[k])datasets.wfe[k]={};Object.assign(datasets.wfe[k],v);});
+      if(cd.capex)Object.entries(cd.capex).forEach(([k,v])=>{if(!datasets.capex[k])datasets.capex[k]={};Object.assign(datasets.capex[k],v);});
+      if(cd.revenue)Object.entries(cd.revenue).forEach(([k,v])=>{if(!datasets.revenue[k])datasets.revenue[k]={};Object.assign(datasets.revenue[k],v);});
+      if(cd.pcTi)Object.entries(cd.pcTi).forEach(([k,v])=>{if(!pcData.ti[k])pcData.ti[k]={};Object.assign(pcData.ti[k],v);});
+      if(cd.pcGartner)Object.entries(cd.pcGartner).forEach(([k,v])=>{if(!pcData.gartner[k])pcData.gartner[k]={};Object.assign(pcData.gartner[k],v);});
+      parseLog.push({file:f.name,status:cd.found?'ok':'skip',msg:cd.found?`Found: ${cd.cats.join(', ')}`:'No recognizable data patterns'});
+      n++;continue;
+    }
+    try{
+      const isPdf=f.name.match(/\.pdf$/i);
+      let res;
+      if(isPdf){res=await parsePDF(f);}
+      else{res=await parseExcel(f);}
+      // snapshot what this file contributed
+      const snap={found:res.found,cats:res.cats,wfe:{},capex:{},revenue:{},pcTi:{},pcGartner:{}};
+      // we re-parse to get the delta — simpler: store snapshot of datasets before/after
+      cache[ck]=snap;
+      parseLog.push({file:f.name,status:res.found?'ok':'skip',msg:res.found?`Found: ${res.cats.join(', ')}`:'No recognizable data patterns'});
+    }catch(e){parseLog.push({file:f.name,status:'warn',msg:`Error: ${e.message}`});errors++;}
     n++;
   }
+  // clean old cache entries
+  const validKeys=new Set(parseable.map(f=>parseCacheKey(f)));
+  Object.keys(cache).forEach(k=>{if(!validKeys.has(k))delete cache[k];});
+  saveParseCache(cache);
   document.getElementById('mP').textContent=n;
   const errEl=document.getElementById('mE');errEl.textContent=errors||'—';errEl.style.color=errors?'var(--bear)':'var(--t3)';
   prog(false);renderParseStatus();renderAllCats();populatePCDropdown();generateTakeaways();
+}
+
+/* ── PDF PARSER ── */
+async function parsePDF(f){
+  const src=guessSource(f.name);
+  const cats=[];
+  try{
+    // Fetch PDF as base64
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,{headers:{Authorization:`Bearer ${tok}`}});
+    const ab=await r.arrayBuffer();
+    const b64=btoa(String.fromCharCode(...new Uint8Array(ab)));
+    // Send to Claude via Worker
+    const res=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,
+        system:`Extract financial data from this semiconductor industry report. Return ONLY JSON with this structure:
+{
+  "wfe": {"source_name": {"2024": 115000, "2025": 120000}},
+  "capex": {"TSMC": {"2024": 30000}, "Samsung": {"2024": 35000}, "Micron": {}, "Intel": {}, "SK hynix": {}},
+  "revenue": {"source_name": {"2024": 600000}},
+  "summary": "2 sentence summary of key findings"
+}
+All values in $M. Only include years 2019-2031. Only include data explicitly stated in the document. If no structured data found, return {"wfe":{},"capex":{},"revenue":{},"summary":"No structured data"}.`,
+        messages:[{role:'user',content:[
+          {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
+          {type:'text',text:`File: ${f.name}\nExtract WFE forecast, capex by company, and semiconductor revenue data.`}
+        ]}]})});
+    const d=await res.json();
+    const raw=d.content?.find(b=>b.type==='text')?.text||'{}';
+    let parsed;try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch{return{found:false,cats:[]};}
+    if(parsed.wfe&&Object.keys(parsed.wfe).length){
+      Object.entries(parsed.wfe).forEach(([k,v])=>{if(!datasets.wfe[src])datasets.wfe[src]={};Object.assign(datasets.wfe[src],v);});
+      cats.push('WFE');
+    }
+    if(parsed.capex){
+      ['TSMC','Samsung','Micron','Intel','SK hynix'].forEach(co=>{
+        if(parsed.capex[co]&&Object.keys(parsed.capex[co]).length){
+          if(!datasets.capex[co])datasets.capex[co]={};Object.assign(datasets.capex[co],parsed.capex[co]);
+          if(!cats.includes('Capex'))cats.push('Capex');
+        }
+      });
+    }
+    if(parsed.revenue&&Object.keys(parsed.revenue).length){
+      Object.entries(parsed.revenue).forEach(([k,v])=>{if(!datasets.revenue[src])datasets.revenue[src]={};Object.assign(datasets.revenue[src],v);});
+      cats.push('Revenue');
+    }
+    return{found:cats.length>0,cats};
+  }catch(e){return{found:false,cats:[]};}
 }
 
 async function parseExcel(f){
@@ -746,7 +829,8 @@ async function parseExcel(f){
     if(hRow>=0){
       (rows.slice(hRow+1,hRow+100)||[]).forEach(row=>{
         const first=row[0]?.replace(/[",]/g,'').trim();const fu=first.toUpperCase();
-        if(isWFE&&(fu==='WAFER FAB EQUIPMENT (WFE)'||fu==='WAFER FAB EQUIPMENT'||fu==='WFE'||fu==='TOTAL WAFER FAB EQUIPENT')){const v=extractRow(row);if(v){if(!datasets.wfe[src])datasets.wfe[src]={};Object.assign(datasets.wfe[src],v);if(!cats.includes('WFE'))cats.push('WFE');}}
+        const WFE_NAMES=new Set(['WAFER FAB EQUIPMENT (WFE)','WAFER FAB EQUIPMENT','WFE','TOTAL WAFER FAB EQUIPENT','TOTAL WAFER FAB EQUIPMENT','ANNUAL WFE','TOTAL WFE','WFE TOTAL','TOTAL','GRAND TOTAL']);
+        if(isWFE&&WFE_NAMES.has(fu)){const v=extractRow(row);if(v&&Object.values(v).some(x=>x>10000)){if(!datasets.wfe[src])datasets.wfe[src]={};Object.assign(datasets.wfe[src],v);if(!cats.includes('WFE'))cats.push('WFE');}}
         if(isCapex){
           ['TSMC','Samsung','Micron','SK hynix','Intel'].forEach(co=>{if(first===co){const v=extractRow(row);if(v){const k=`${co}`;if(!datasets.capex[k])datasets.capex[k]={};Object.assign(datasets.capex[k],v);if(!cats.includes('Capex'))cats.push('Capex');}}});
         }
@@ -965,7 +1049,7 @@ async function askQ(){
 /* ── MISC ── */
 function showCat(cat,tab){document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.cat-panel').forEach(p=>p.classList.remove('active'));tab.classList.add('active');document.getElementById('panel-'+cat).classList.add('active');if(cat==='marketsignals'&&typeof initMarketSignals==='function')initMarketSignals();}
 function prog(show,label,pct){document.getElementById('progWrap').style.display=show?'block':'none';if(show){document.getElementById('progLbl').textContent=label;document.getElementById('progBar').style.width=pct+'%';}}
-function doSync(){if(!tok){initiateAuth();return;}loadFiles();}
+function doSync(){if(!tok){initiateAuth();return;}parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};loadFiles(true);}
 /* ══════════════════════════════════════════════
    MARKET SIGNALS — EDGAR + Claude API
 ══════════════════════════════════════════════ */
