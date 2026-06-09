@@ -464,6 +464,10 @@ footer em{color:var(--p);font-style:normal;}
           <option value="current">Current (latest)</option>
         </select>
       </div>
+      <div id="pcAdvPackNote" style="display:none;font-size:11px;color:#065F46;background:#ECFDF5;border:1px solid rgba(5,150,105,.2);border-radius:var(--r6);padding:8px 12px;margin-bottom:10px;">
+        <i class="ti ti-package" style="margin-right:4px;"></i>
+        <strong>Advanced Packaging signal:</strong> "Wafer Level Pkg Inspection" segment is a leading indicator for CoWoS/SoIC/HBM demand — Nova's key growth driver. CAGR 2024-2030: ~40%.
+      </div>
       <div class="atogs" id="pc-toggles"></div>
       <div class="chart-wrap"><canvas id="pc-chart"></canvas></div>
       <div class="dt-wrap" id="pc-table"><div class="na-msg">Process Control data will appear after syncing files from Gartner and TechInsights.</div></div>
@@ -910,7 +914,8 @@ async function parseExcel(f){
           if(ok>=3){if(!pcData.ti[segName])pcData.ti[segName]={};Object.assign(pcData.ti[segName],vals);}
         }
       });
-      if(Object.keys(pcData.ti).length)cats.push('Process Control (TI)');
+      if(Object.keys(pcData.ti).length){cats.push('Process Control (TI)');}
+      else{console.log('TI PC: yearRow=',yearRow,'yearCols=',JSON.stringify(yearCols),'nameMap keys=',Object.keys(nameMap).slice(0,10));}
     }
   }
 
@@ -1142,6 +1147,12 @@ function populatePCDropdown(){
 function drawPC(){
   const seg=document.getElementById('pcSegment').value;
   if(!seg)return;
+  // Show advanced packaging note for relevant segments
+  const advPkgNote=document.getElementById('pcAdvPackNote');
+  if(advPkgNote){
+    const isAdvPkg=seg.toLowerCase().includes('wafer level')||seg.toLowerCase().includes('packaging');
+    advPkgNote.style.display=isAdvPkg?'block':'none';
+  }
   const tiVals=pcData.ti[seg]||{};const gVals=pcData.gartner[seg]||{};
   const allYrs=new Set([...Object.keys(tiVals),...Object.keys(gVals)]);
   const years=[...allYrs].sort();
@@ -1657,7 +1668,8 @@ function renderFabTable(){
       if(!data||!Object.keys(data).length)return;
       html+=`<tr><td style="font-weight:600">${co}</td>${SHOW_YEARS.map(y=>{
         const v=data[y]||null;
-        return`<td style="text-align:right;font-size:11px">${fmt(v,isWspy)}</td>`;
+        const display=fmt(v,isWspy);
+        return`<td style="text-align:right;vertical-align:top;padding:6px 8px;"><div style="font-size:11px;font-weight:500;">${display}</div><div style="font-size:9px;color:var(--t3);margin-top:1px;">${display!=='—'?unitLabel:''}</div></td>`;
       }).join('')}</tr>`;
     });
     html+=`</tbody></table>
