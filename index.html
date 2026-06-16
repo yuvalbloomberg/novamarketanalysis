@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v2.5</title>
+<title>Nova Market Intelligence v2.7</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -314,7 +314,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v2.5</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v2.7</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -899,12 +899,14 @@ async function parseExcel(f){
     });
     if(yearRow!==null){
       const years=Object.keys(yearCols).sort();
-      // VIC CODE map: col 4 → row index
+      // VIC CODE map: col 4 → row index (normalize trailing zeros: 1482.42000 -> 1482.42)
       const vicMap={};
       pdRows.forEach((row,ri)=>{
         if(ri<=yearRow||!row)return;
-        const vic=String(row[4]||'').trim().replace(/\.0+$/,'');
-        if(vic&&/^\d{4}(\.\d+)?$/.test(String(row[4]||'')))vicMap[vic]=ri;
+        const raw=String(row[4]||'').trim();
+        if(!raw||!/^\d+(\.\d+)?$/.test(raw))return;
+        const vic=parseFloat(raw).toString(); // normalizes 1482.42000 -> 1482.42, 1480.00000 -> 1480
+        vicMap[vic]=ri;
       });
       // Also build name map from col 0-3
       const nameMap={};
@@ -1454,7 +1456,16 @@ function drawCat(cat){
     charts[cat]=new Chart(ctx,{type:'bar',data:{labels:srcs,datasets:[{label:yr,data:srcs.map(s=>getData(s,yr)),backgroundColor:srcs.map(s=>clr(s)+'BB'),borderColor:srcs.map(s=>clr(s)),borderWidth:1,borderRadius:4}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${(c.raw/1000).toFixed(1)}B`}}},scales:{y:{ticks:{callback:v=>`$${(v/1000).toFixed(0)}B`},grid:{color:'rgba(107,33,214,.06)'},border:{display:false}},x:{grid:{display:false},border:{display:false}}}}});
   }else{
-    charts[cat]=new Chart(ctx,{type:'line',data:{labels:years,datasets:srcs.map(s=>({label:s,data:years.map(y=>getData(s,y)),borderColor:clr(s),backgroundColor:clr(s)+'18',borderWidth:2,pointRadius:4,pointBackgroundColor:clr(s),tension:.3,spanGaps:true,fill:false}))},
+    // Detect if any visible source has gaps (nulls between real values) - if so, use straight lines (tension:0) to avoid Bezier curve visually drifting from its true point
+    const hasGaps=srcs.some(s=>{
+      const vals=years.map(y=>getData(s,y));
+      const firstIdx=vals.findIndex(v=>v!=null);
+      const lastIdx=vals.length-1-[...vals].reverse().findIndex(v=>v!=null);
+      if(firstIdx===-1)return false;
+      for(let i=firstIdx;i<=lastIdx;i++){if(vals[i]==null)return true;}
+      return false;
+    });
+    charts[cat]=new Chart(ctx,{type:'line',data:{labels:years,datasets:srcs.map(s=>({label:s,data:years.map(y=>getData(s,y)),borderColor:clr(s),backgroundColor:clr(s)+'18',borderWidth:2,pointRadius:4,pointBackgroundColor:clr(s),tension:hasGaps?0:.3,spanGaps:true,fill:false}))},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:10,padding:12}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: $${(c.raw/1000).toFixed(1)}B`}}},scales:{y:{ticks:{font:{size:10},callback:v=>`$${(v/1000).toFixed(0)}B`},grid:{color:'rgba(107,33,214,.06)'},border:{display:false}},x:{ticks:{font:{size:10}},grid:{display:false},border:{display:false}}}}});
   }
   let html=`<table class="dt"><thead><tr><th>Source</th>${years.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
