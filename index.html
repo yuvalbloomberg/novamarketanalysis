@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v2.4</title>
+<title>Nova Market Intelligence v2.5</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -314,7 +314,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v2.4</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v2.5</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -655,14 +655,7 @@ const FOLDER='Nova_Market_Intelligence';
 const STALE_MONTHS=6;
 const WORKER_URL='https://nova-proxy.yuvalbloomberg.workers.dev';
 
-/* ── PROCESS CONTROL SEGMENTS ── */
-const PC_SEGMENTS_TI={
-  'Total Process Diagnostics':7,'Wafer Fab Process Control':8,'Film/Stack/Shape Metrology':9,
-  'Ellipsometers':10,'Optical Surface Profiling':12,'Optical Shape/CD':15,'Overlay Metrology':17,
-  'CD SEMs':20,'Defect Inspection Tools':21,'Optical Patterned Wafer Inspection':22,
-  'Un-patterned Darkfield Inspection':23,'E-beam Inspection':26,'Defect Review Stations':27,
-  'Reticle Inspection & Repair':29,'Wafer Level Pkg Inspection':35,'Software & Data Analytics':38
-};
+/* ── PROCESS CONTROL SEGMENTS (Gartner only — TI segments come from direct VIC-code parser) ── */
 const PC_SEGMENTS_GARTNER={
   'Total Process Control':88,'Wafer Inspection and Defect Review':78,
   'Optical Patterned Wafer Inspection':75,'E-Beam Wafer Inspection/Metrology':74,
@@ -785,6 +778,7 @@ async function parseFiles(files,forceRefresh){
       if(cd.revenue)Object.entries(cd.revenue).forEach(([k,v])=>{if(!datasets.revenue[k])datasets.revenue[k]={};Object.assign(datasets.revenue[k],v);});
       if(cd.pcTi)Object.entries(cd.pcTi).forEach(([k,v])=>{if(!pcData.ti[k])pcData.ti[k]={};Object.assign(pcData.ti[k],v);});
       if(cd.pcGartner)Object.entries(cd.pcGartner).forEach(([k,v])=>{if(!pcData.gartner[k])pcData.gartner[k]={};Object.assign(pcData.gartner[k],v);});
+      if(cd.capexAnalyst)Object.entries(cd.capexAnalyst).forEach(([k,v])=>{if(!capexByAnalyst[k])capexByAnalyst[k]={};Object.entries(v).forEach(([y,n])=>{capexByAnalyst[k][y]=(capexByAnalyst[k][y]||0)+n;});});
       parseLog.push({file:f.name,status:cd.found?'ok':'skip',msg:cd.found?`Found: ${cd.cats.join(', ')}`:'No recognizable data patterns'});
       n++;continue;
     }
@@ -796,18 +790,23 @@ async function parseFiles(files,forceRefresh){
         capex:JSON.parse(JSON.stringify(datasets.capex)),
         revenue:JSON.parse(JSON.stringify(datasets.revenue)),
         pcTi:JSON.parse(JSON.stringify(pcData.ti)),
-        pcGartner:JSON.parse(JSON.stringify(pcData.gartner))
+        pcGartner:JSON.parse(JSON.stringify(pcData.gartner)),
+        capexAnalyst:JSON.parse(JSON.stringify(capexByAnalyst))
       };
       let res;
       if(isPdf){res=await parsePDF(f);}
       else{res=await parseExcel(f);}
       // compute delta (what this file added)
-      const snap={found:res.found,cats:res.cats,wfe:{},capex:{},revenue:{},pcTi:{},pcGartner:{}};
+      const snap={found:res.found,cats:res.cats,wfe:{},capex:{},revenue:{},pcTi:{},pcGartner:{},capexAnalyst:{}};
       Object.keys(datasets.wfe).forEach(k=>{if(!snapBefore.wfe[k])snap.wfe[k]=datasets.wfe[k];});
       Object.keys(datasets.capex).forEach(k=>{if(!snapBefore.capex[k])snap.capex[k]=datasets.capex[k];else{const diff={};Object.keys(datasets.capex[k]).forEach(y=>{if(!snapBefore.capex[k][y])diff[y]=datasets.capex[k][y];});if(Object.keys(diff).length)snap.capex[k]=diff;}});
       Object.keys(datasets.revenue).forEach(k=>{if(!snapBefore.revenue[k])snap.revenue[k]=datasets.revenue[k];});
       Object.keys(pcData.ti).forEach(k=>{if(!snapBefore.pcTi[k])snap.pcTi[k]=pcData.ti[k];});
       Object.keys(pcData.gartner).forEach(k=>{if(!snapBefore.pcGartner[k])snap.pcGartner[k]=pcData.gartner[k];});
+      Object.keys(capexByAnalyst).forEach(k=>{
+        if(!snapBefore.capexAnalyst[k])snap.capexAnalyst[k]=capexByAnalyst[k];
+        else{const diff={};Object.keys(capexByAnalyst[k]).forEach(y=>{if(!snapBefore.capexAnalyst[k][y])diff[y]=capexByAnalyst[k][y];});if(Object.keys(diff).length)snap.capexAnalyst[k]=diff;}
+      });
       cache[ck]=snap;
       parseLog.push({file:f.name,status:res.found?'ok':'skip',msg:res.found?`Found: ${res.cats.join(', ')}`:'No recognizable data patterns'});
     }catch(e){parseLog.push({file:f.name,status:'warn',msg:`Error: ${e.message}`});errors++;}
@@ -923,16 +922,17 @@ async function parseExcel(f){
         'Ellipsometers':'1482.22',
         'Optical Surface Profiling':'1482.24',
         'Optical Shape/CD':'1482.27',
-        'Overlay Metrology':'1482.28',
-        'CD SEMs':'1482.3',
-        'Defect Inspection Tools':'1482.4',
-        'Optical Patterned Wafer Inspection':'1482.41',
-        'Un-patterned Darkfield Inspection':'1482.42',
-        'E-beam Inspection':'1482.43',
-        'Defect Review Stations':'1482.44',
-        'Reticle Inspection & Repair':'1482.5',
-        'Wafer Level Pkg Inspection':'1482.6',
-        'Software & Data Analytics':'1482.7'
+        'Overlay Metrology':'1482.3',
+        'CD SEM':'1482.42',
+        'CD Metrology':'1482.4',
+        'Defect Inspection Tools':'1482.5',
+        'Optical Patterned Wafer Inspection':'1482.51',
+        'Un-patterned Darkfield Inspection':'1482.52',
+        'E-beam Inspection':'1482.6',
+        'Defect Review Stations':'1482.7',
+        'Reticle Inspection & Repair':'1484',
+        'Wafer Level Pkg Inspection':'1486',
+        'Software & Data Analytics':'1487'
       };
       Object.entries(TI_VIC_MAP).forEach(([segName,vic])=>{
         const rowIdx=vicMap[vic];
@@ -1242,9 +1242,26 @@ Return: {"wfe":{},"capex":{},"revenue":{}}`,
           if(datasets.wfe[k]&&Object.keys(datasets.wfe[k]).length>0)return;
           if(Object.keys(v).length){if(!datasets.wfe[k])datasets.wfe[k]={};Object.assign(datasets.wfe[k],v);if(!cats.includes('WFE'))cats.push('WFE');}
         });
-        if(parsed.capex)['TSMC','Samsung','Micron','Intel','SK hynix'].forEach(co=>{
-          if(parsed.capex[co]&&Object.keys(parsed.capex[co]).length){if(!datasets.capex[co])datasets.capex[co]={};Object.assign(datasets.capex[co],parsed.capex[co]);if(!cats.includes('Capex'))cats.push('Capex');}
-        });
+        if(parsed.capex){
+          const fileCapexTotal={}; // year -> sum across companies for THIS file/analyst
+          ['TSMC','Samsung','Micron','Intel','SK hynix'].forEach(co=>{
+            if(parsed.capex[co]&&Object.keys(parsed.capex[co]).length){
+              if(!datasets.capex[co])datasets.capex[co]={};
+              Object.assign(datasets.capex[co],parsed.capex[co]);
+              if(!cats.includes('Capex'))cats.push('Capex');
+              Object.entries(parsed.capex[co]).forEach(([y,v])=>{
+                if(typeof v==='number'&&!isNaN(v))fileCapexTotal[y]=(fileCapexTotal[y]||0)+v;
+              });
+            }
+          });
+          // Aggregate into capexByAnalyst keyed by this file's source
+          if(Object.keys(fileCapexTotal).length&&src){
+            if(!capexByAnalyst[src])capexByAnalyst[src]={};
+            Object.entries(fileCapexTotal).forEach(([y,v])=>{
+              capexByAnalyst[src][y]=(capexByAnalyst[src][y]||0)+v;
+            });
+          }
+        }
         if(parsed.revenue)Object.entries(parsed.revenue).forEach(([k,v])=>{
           // Skip junk source names from AI extraction
           const kl=k.toLowerCase();
