@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v2.7</title>
+<title>Nova Market Intelligence v2.8</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -314,7 +314,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v2.7</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v2.8</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -949,6 +949,7 @@ async function parseExcel(f){
         });
         if(ok>=2){if(!pcData.ti[segName])pcData.ti[segName]={};Object.assign(pcData.ti[segName],vals);}
       });
+      console.log(`[PC-TI DEBUG] file=${f.name} vicMapKeys=${JSON.stringify(Object.keys(vicMap))} foundSegments=${JSON.stringify(Object.keys(pcData.ti))}`);
       if(Object.keys(pcData.ti).length){cats.push('Process Control (TI)');}
       else{
         parseLog.push({file:f.name,status:'warn',msg:`TI PC: yearRow=${yearRow}, vicMap keys=[${Object.keys(vicMap).slice(0,5).join(',')}]`});
