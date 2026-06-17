@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v2.9</title>
+<title>Nova Market Intelligence v3.0</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -314,7 +314,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v2.9</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.0</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -339,11 +339,22 @@ footer em{color:var(--p);font-style:normal;}
 <!-- MAIN -->
 <div id="main" style="display:none;">
 
-  <div class="metrics">
-    <div class="metric"><div class="mv" id="mF">—</div><div class="ml">Files indexed</div></div>
-    <div class="metric"><div class="mv" id="mS">—</div><div class="ml">Sources</div></div>
-    <div class="metric"><div class="mv" id="mP">—</div><div class="ml">Parsed</div></div>
-    <div class="metric"><div class="mv" id="mE">—</div><div class="ml">Parse errors</div></div>
+  <!-- COPILOT (moved to top) -->
+  <div class="panel">
+    <div class="ph"><div class="ph-l"><i class="ti ti-robot"></i> AI Research Copilot</div></div>
+    <div class="mtabs">
+      <button class="mt active" onclick="setMode('general',this)">General</button>
+      <button class="mt" onclick="setMode('nova',this)">Nova Impact</button>
+      <button class="mt" onclick="setMode('sales',this)">Sales Mode</button>
+      <button class="mt" onclick="setMode('risk',this)">Risk Analysis</button>
+      <button class="mt" onclick="setMode('compare',this)">Compare Sources</button>
+    </div>
+    <div class="qa-row">
+      <input type="text" id="qaIn" placeholder="Ask a question about your reports..." onkeydown="if(event.key==='Enter')askQ()"/>
+      <button class="qa-btn" onclick="askQ()">Ask</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div id="qaOut"></div>
   </div>
 
   <div id="progWrap" class="pw" style="display:none;">
@@ -627,22 +638,11 @@ footer em{color:var(--p);font-style:normal;}
     </div>
   </div>
 
-  <!-- COPILOT -->
-  <div class="panel">
-    <div class="ph"><div class="ph-l"><i class="ti ti-robot"></i> AI Research Copilot</div></div>
-    <div class="mtabs">
-      <button class="mt active" onclick="setMode('general',this)">General</button>
-      <button class="mt" onclick="setMode('nova',this)">Nova Impact</button>
-      <button class="mt" onclick="setMode('sales',this)">Sales Mode</button>
-      <button class="mt" onclick="setMode('risk',this)">Risk Analysis</button>
-      <button class="mt" onclick="setMode('compare',this)">Compare Sources</button>
-    </div>
-    <div class="qa-row">
-      <input type="text" id="qaIn" placeholder="Ask a question about your reports..." onkeydown="if(event.key==='Enter')askQ()"/>
-      <button class="qa-btn" onclick="askQ()">Ask</button>
-    </div>
-    <div class="chips" id="chips"></div>
-    <div id="qaOut"></div>
+  <div class="metrics" style="margin-top:24px;">
+    <div class="metric"><div class="mv" id="mF">—</div><div class="ml">Files indexed</div></div>
+    <div class="metric"><div class="mv" id="mS">—</div><div class="ml">Sources</div></div>
+    <div class="metric"><div class="mv" id="mP">—</div><div class="ml">Parsed</div></div>
+    <div class="metric"><div class="mv" id="mE">—</div><div class="ml">Parse errors</div></div>
   </div>
 
 </div>
