@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v3.4</title>
+<title>Nova Market Intelligence v3.5</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -314,14 +314,14 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.4</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.5</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
   <div class="tbr">
     <span class="sdot" id="sdot"></span>
-    <button class="tbtn" onclick="doSync()"><i class="ti ti-refresh"></i> Sync Drive</button>
-    <button class="tbtn" onclick="doFullSync()" title="Clear cache and re-parse all files"><i class="ti ti-refresh-alert"></i> Full Refresh</button>
+    <button class="tbtn" id="syncBtn" onclick="doSync()"><i class="ti ti-refresh"></i> Sync Drive</button>
+    <button class="tbtn" id="fullSyncBtn" onclick="doFullSync()" title="Clear cache and re-parse all files"><i class="ti ti-refresh-alert"></i> Full Refresh</button>
     <button class="tbtn w" id="authBtn" onclick="initiateAuth()"><i class="ti ti-login"></i> Connect</button>
   </div>
 </div>
@@ -715,7 +715,7 @@ async function api(url){const r=await fetch(url,{headers:{Authorization:`Bearer 
 /* ── LOAD FILES ── */
 async function loadFiles(forceRefresh){
   prog(true,'Searching folder...',10);
-  parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};
+  parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};capexByAnalyst={};
   const s=await api(`https://www.googleapis.com/drive/v3/files?q=name='${FOLDER}' and mimeType='application/vnd.google-apps.folder'&fields=files(id,name)`);
   if(!s.files?.length){prog(false);document.getElementById('fileList').innerHTML='<div class="na-msg">Folder not found in Drive.</div>';return;}
   const fid=s.files[0].id;
@@ -2215,14 +2215,24 @@ function downloadFabCSV(){
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='nova_fab_capacity.csv';a.click();
 }
 function prog(show,label,pct){document.getElementById('progWrap').style.display=show?'block':'none';if(show){document.getElementById('progLbl').textContent=label;document.getElementById('progBar').style.width=pct+'%';}}
+let syncInProgress=false;
+function setSyncButtonsDisabled(disabled){
+  const b1=document.getElementById('syncBtn'),b2=document.getElementById('fullSyncBtn');
+  if(b1)b1.disabled=disabled;if(b2)b2.disabled=disabled;
+  if(b1)b1.style.opacity=disabled?'0.5':'1';if(b2)b2.style.opacity=disabled?'0.5':'1';
+}
 function doSync(){
   if(!tok){initiateAuth();return;}
+  if(syncInProgress)return;
+  syncInProgress=true;setSyncButtonsDisabled(true);
   // Incremental: keep existing parse cache, only re-parse files with new modifiedTime
   parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};capexByAnalyst={};
-  loadFiles(false); // false = use cache where modifiedTime unchanged
+  loadFiles(false).finally(()=>{syncInProgress=false;setSyncButtonsDisabled(false);});
 }
 function doFullSync(){
   if(!tok){initiateAuth();return;}
+  if(syncInProgress)return;
+  syncInProgress=true;setSyncButtonsDisabled(true);
   // Save current datasets as "previous quarter" before clearing
   if(Object.keys(datasets.wfe).length){
     prevDatasets={wfe:JSON.parse(JSON.stringify(datasets.wfe)),capex:JSON.parse(JSON.stringify(datasets.capex)),revenue:JSON.parse(JSON.stringify(datasets.revenue))};
@@ -2231,7 +2241,7 @@ function doFullSync(){
   // Full refresh: clears parse cache
   try{localStorage.removeItem('nova_parse_cache_v3');}catch{}
   parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};capexByAnalyst={};
-  loadFiles(true);
+  loadFiles(true).finally(()=>{syncInProgress=false;setSyncButtonsDisabled(false);});
 }
 /* ══════════════════════════════════════════════
    MARKET SIGNALS — EDGAR + Claude API
