@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v3.7</title>
+<title>Nova Market Intelligence v3.8</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -314,7 +314,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.7</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.8</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -1239,7 +1239,8 @@ Return: {"wfe":{},"capex":{},"revenue":{}}`,
       if(parsed){
         if(parsed.wfe)Object.entries(parsed.wfe).forEach(([k,v])=>{
           const kl=k.toLowerCase();
-          if(kl.includes('internal')||kl.includes('file')||kl==='sheet2'||kl==='sheet 2'||kl.length<3)return;
+          const KNOWN_ANALYSTS_WFE=['gartner','techinsights','semi','bofa','barclays','jpmorgan','goldman sachs','yole','evercore','s&p ciq','nova internal'];
+          if(!KNOWN_ANALYSTS_WFE.includes(kl))return;
           // Skip if direct parser already found this source
           if(datasets.wfe[k]&&Object.keys(datasets.wfe[k]).length>0)return;
           if(Object.keys(v).length){if(!datasets.wfe[k])datasets.wfe[k]={};Object.assign(datasets.wfe[k],v);if(!cats.includes('WFE'))cats.push('WFE');}
@@ -1273,7 +1274,9 @@ Return: {"wfe":{},"capex":{},"revenue":{}}`,
         if(parsed.revenue)Object.entries(parsed.revenue).forEach(([k,v])=>{
           // Skip junk source names from AI extraction
           const kl=k.toLowerCase();
-          if(kl.includes('internal')||kl.includes('file context')||kl.includes('filecontext')||kl==='sheet2'||kl==='sheet 2'||kl==='file'||kl.includes('forecast')||kl.length<3)return;
+          // Whitelist known analyst names; reject anything else (catches all AI-hallucinated junk names like File_Context, File_Data, Sheet2, Internal Model, etc.)
+          const KNOWN_ANALYSTS=['gartner','techinsights','semi','bofa','barclays','jpmorgan','goldman sachs','yole','evercore','s&p ciq','nova internal'];
+          if(!KNOWN_ANALYSTS.includes(kl))return;
           // Skip if direct parser already found this source
           if(datasets.revenue[k]&&Object.keys(datasets.revenue[k]).length>0)return;
           const vals=Object.values(v).filter(n=>typeof n==='number'&&!isNaN(n));
