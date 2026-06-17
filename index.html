@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v3.5</title>
+<title>Nova Market Intelligence v3.6</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -314,7 +314,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.5</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.6</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -1373,11 +1373,25 @@ function drawQBack(cat){
   const curr=datasets[cat];const prev=prevDatasets[cat];
   const el=document.getElementById(`${cat}-table`);
   if(!showingQBack||!Object.keys(prev).length){drawCat(cat);return;}
-  const srcs=[...new Set([...Object.keys(curr),...Object.keys(prev)])];
+  const srcs=[...new Set([...Object.keys(curr),...Object.keys(prev)])].filter(s=>!hidden[cat].has(s));
   const VALID_YEARS=new Set(['2024','2025','2026','2027','2028','2029','2030']);
   const ySet=new Set();srcs.forEach(s=>{Object.keys(curr[s]||{}).forEach(y=>{if(VALID_YEARS.has(y))ySet.add(y);});Object.keys(prev[s]||{}).forEach(y=>{if(VALID_YEARS.has(y))ySet.add(y);});});
   const years=[...ySet].sort();
-  let html=`<div style="font-size:11px;color:var(--t2);margin-bottom:8px;padding:6px 10px;background:var(--neubg);border-radius:var(--r6);"><i class="ti ti-arrows-diff" style="margin-right:4px;"></i>Comparing current vs previous quarter · <span style="color:var(--bull)">▲ = revised up</span> · <span style="color:var(--bear)">▼ = revised down</span></div>`;
+
+  // Redraw chart: solid lines = current quarter, dashed = previous quarter
+  const ctx=document.getElementById(`${cat}-chart`).getContext('2d');
+  if(charts[cat])charts[cat].destroy();
+  const chartDatasets=[];
+  srcs.forEach(s=>{
+    chartDatasets.push({label:`${s} (current)`,data:years.map(y=>curr[s]&&curr[s][y]!=null?curr[s][y]:null),borderColor:clr(s),backgroundColor:clr(s)+'18',borderWidth:2,pointRadius:4,pointBackgroundColor:clr(s),tension:0,spanGaps:true,fill:false});
+    if(prev[s]){
+      chartDatasets.push({label:`${s} (prev quarter)`,data:years.map(y=>prev[s][y]!=null?prev[s][y]:null),borderColor:clr(s),backgroundColor:clr(s)+'00',borderWidth:2,borderDash:[6,4],pointRadius:2,pointBackgroundColor:clr(s),tension:0,spanGaps:true,fill:false,opacity:0.6});
+    }
+  });
+  charts[cat]=new Chart(ctx,{type:'line',data:{labels:years,datasets:chartDatasets},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:9},boxWidth:10,padding:8}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: $${(c.raw/1000).toFixed(1)}B`}}},scales:{y:{ticks:{font:{size:10},callback:v=>`$${(v/1000).toFixed(0)}B`},grid:{color:'rgba(107,33,214,.06)'},border:{display:false}},x:{ticks:{font:{size:10}},grid:{display:false},border:{display:false}}}}});
+
+  let html=`<div style="font-size:11px;color:var(--t2);margin-bottom:8px;padding:6px 10px;background:var(--neubg);border-radius:var(--r6);"><i class="ti ti-arrows-diff" style="margin-right:4px;"></i>Comparing current vs previous quarter (dashed lines = prior forecast) · <span style="color:var(--bull)">▲ = revised up</span> · <span style="color:var(--bear)">▼ = revised down</span></div>`;
   html+=`<table class="dt"><thead><tr><th>Source</th>${years.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
   srcs.forEach(s=>{
     html+=`<tr><td><span class="src-dot" style="background:${clr(s)}"></span>${s}</td>`;
