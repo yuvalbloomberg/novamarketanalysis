@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v3.2</title>
+<title>Nova Market Intelligence v3.3</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -314,7 +314,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.2</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.3</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -1257,13 +1257,17 @@ Return: {"wfe":{},"capex":{},"revenue":{}}`,
             }
           });
           // Aggregate into capexByAnalyst keyed by this file's source
-          console.log(`[CAPEX-ANALYST DEBUG] file=${f.name} src=${src} fileCapexTotal=${JSON.stringify(fileCapexTotal)}`);
+          // Dedup: skip if this exact total already exists for this analyst (handles duplicate uploads with identical content, e.g. "New.xlsx" + "New1.xlsx")
           if(Object.keys(fileCapexTotal).length&&src){
-            if(!capexByAnalyst[src])capexByAnalyst[src]={};
-            Object.entries(fileCapexTotal).forEach(([y,v])=>{
-              capexByAnalyst[src][y]=(capexByAnalyst[src][y]||0)+v;
-            });
-            console.log(`[CAPEX-ANALYST DEBUG] capexByAnalyst now=${JSON.stringify(capexByAnalyst)}`);
+            const existing=capexByAnalyst[src];
+            const isDuplicate=existing&&Object.keys(fileCapexTotal).every(y=>existing[y]===fileCapexTotal[y]);
+            if(!isDuplicate){
+              if(!capexByAnalyst[src])capexByAnalyst[src]={};
+              Object.entries(fileCapexTotal).forEach(([y,v])=>{
+                // Only add if this year doesn't already have a value (avoid double counting partial-overlap duplicate files)
+                if(capexByAnalyst[src][y]===undefined)capexByAnalyst[src][y]=v;
+              });
+            }
           }
         }
         if(parsed.revenue)Object.entries(parsed.revenue).forEach(([k,v])=>{
@@ -2209,7 +2213,7 @@ function prog(show,label,pct){document.getElementById('progWrap').style.display=
 function doSync(){
   if(!tok){initiateAuth();return;}
   // Incremental: keep existing parse cache, only re-parse files with new modifiedTime
-  parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};
+  parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};capexByAnalyst={};
   loadFiles(false); // false = use cache where modifiedTime unchanged
 }
 function doFullSync(){
@@ -2221,7 +2225,7 @@ function doFullSync(){
   }
   // Full refresh: clears parse cache
   try{localStorage.removeItem('nova_parse_cache_v3');}catch{}
-  parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};
+  parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};capexByAnalyst={};
   loadFiles(true);
 }
 /* ══════════════════════════════════════════════
