@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v3.0</title>
+<title>Nova Market Intelligence v3.1</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -314,7 +314,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.0</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.1</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -1307,11 +1307,15 @@ function setCapexView(mode,btn){
 
 function renderCat(cat){
   if(cat==='capex'&&capexViewMode==='analyst'){
-    // Rebuild analyst aggregation from file-level source tags
-    // We store per-analyst total capex in capexByAnalyst during parse
     const data=capexByAnalyst;
     const srcs=Object.keys(data);
-    if(!srcs.length){document.getElementById('capex-table').innerHTML='<div class="na-msg">No analyst-level Capex data found.</div>';return;}
+    if(!srcs.length){
+      document.getElementById('capex-table').innerHTML='<div class="na-msg">No analyst-level Capex data found — try Full Refresh to rebuild analyst totals.</div>';
+      document.getElementById('capex-toggles').innerHTML='';
+      document.getElementById('capex-years').innerHTML='';
+      if(charts.capex){charts.capex.destroy();charts.capex=null;}
+      return;
+    }
     buildYearSelFromData('capex',data);renderToggles('capex',srcs);drawCatData('capex',data);
     return;
   }
