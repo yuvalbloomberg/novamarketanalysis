@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v4.0</title>
+<title>Nova Market Intelligence v4.1</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -184,7 +184,19 @@ table.mt tr:last-child td{border-bottom:none;}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
 .chip{font-size:11px;padding:4px 12px;border-radius:99px;border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;}
 .chip:hover{border-color:var(--pb);color:var(--p);}
-.qa-ans{margin-top:12px;font-size:13px;line-height:1.7;background:var(--pdim);border-radius:var(--r10);padding:14px 16px;border-left:3px solid var(--p);}
+.qa-thread{display:flex;flex-direction:column;gap:10px;margin-top:12px;}
+.qa-turn{border-radius:var(--r10);overflow:hidden;}
+.qa-turn-q{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--t2);background:var(--bg);border:1px solid var(--b1);border-radius:var(--r10);padding:9px 14px;cursor:pointer;}
+.qa-turn-q:hover{border-color:var(--pb);}
+.qa-turn-q .qtxt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.qa-turn-q .qchev{transition:transform .15s;color:var(--t3);font-size:11px;}
+.qa-turn.collapsed .qchev{transform:rotate(-90deg);}
+.qa-turn.collapsed .qa-ans{display:none;}
+.qa-turn.collapsed .qa-turn-q{background:var(--w);}
+.qa-clear-row{display:flex;justify-content:flex-end;margin-top:6px;}
+.qa-clear-btn{font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit;}
+.qa-clear-btn:hover{color:var(--p);}
+.qa-ans{margin-top:0;font-size:13px;line-height:1.7;background:var(--pdim);border-radius:0 0 var(--r10) var(--r10);padding:14px 16px;border-left:3px solid var(--p);}
 .qa-src{font-size:10px;color:var(--t3);margin-top:8px;padding-top:6px;border-top:1px solid var(--pb);}
 .qa-origin{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;margin-bottom:10px;}
 .qa-origin.drive{background:var(--pdim);color:var(--p);border:1px solid var(--pb);}
@@ -326,7 +338,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v4.0</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v4.1</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -366,7 +378,8 @@ footer em{color:var(--p);font-style:normal;}
       <button class="qa-btn" onclick="askQ()">Ask</button>
     </div>
     <div class="chips" id="chips"></div>
-    <div id="qaOut"></div>
+    <div class="qa-clear-row" id="qaClearRow" style="display:none;"><button class="qa-clear-btn" onclick="clearQAThread()">Clear conversation</button></div>
+    <div id="qaOut" class="qa-thread"></div>
   </div>
 
   <div id="progWrap" class="pw" style="display:none;">
@@ -679,6 +692,7 @@ const PC_SEGMENTS_GARTNER={
 
 /* ── STATE ── */
 let tok,allFiles=[],qaMode='general';
+let qaHistory=[]; // [{q, parsed, origin}] — running conversation for the AI Copilot, sent in full to Claude each turn
 let charts={wfe:null,capex:null,revenue:null,pc:null,tl:null};
 let datasets={wfe:{},capex:{},revenue:{},pc:{}};
 let pcData={ti:{},gartner:{}}; // {segmentName: {year: value}}
@@ -1877,12 +1891,25 @@ async function generateTakeaways(){
 /* ── COPILOT ── */
 const CHIPS={general:['WFE forecast 2028?','Most bullish source?','Biggest trend?'],nova:['Nova implications?','Advanced packaging demand?','Process control trends?'],sales:['Talking points for TSMC?','AI packaging narrative?','Position vs KLA?'],risk:['Key risks 2025?','China WFE risk?','Memory uncertainty?'],compare:['Compare all sources on WFE?','Most bullish on packaging?','Biggest disagreements?']};
 const MODEPR={general:'Answer directly based on available reports.',nova:'Focus on implications for Nova: optical metrology, process control, packaging inspection.',sales:'Provide talking points for Nova sales engineers.',risk:'Focus on risks. Rank by severity.',compare:'Compare sources. Highlight agreements and disagreements.'};
-function setMode(m,btn){qaMode=m;document.querySelectorAll('.mt').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.getElementById('chips').innerHTML=(CHIPS[m]||[]).map(q=>`<span class="chip" onclick="document.getElementById('qaIn').value='${q}'">${q}</span>`).join('');}
+function setMode(m,btn){qaMode=m;document.querySelectorAll('.mt').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.getElementById('chips').innerHTML=(CHIPS[m]||[]).map(q=>`<span class="chip" onclick="document.getElementById('qaIn').value='${q}'">${q}</span>`).join('');clearQAThread();}
 window.addEventListener('DOMContentLoaded',()=>{document.getElementById('chips').innerHTML=(CHIPS.general||[]).map(q=>`<span class="chip" onclick="document.getElementById('qaIn').value='${q}'">${q}</span>`).join('');});
 async function askQ(){
   const q=document.getElementById('qaIn').value.trim();if(!q)return;
+  document.getElementById('qaIn').value='';
   const out=document.getElementById('qaOut');
-  out.innerHTML='<div class="qa-ans"><i class="ti ti-loader spin"></i> Reading reports from Drive...</div>';
+
+  // Collapse all previous turns and add a loading placeholder for this turn
+  out.querySelectorAll('.qa-turn').forEach(t=>t.classList.add('collapsed'));
+  const turnId='qaTurn_'+Date.now();
+  const loadingTurn=document.createElement('div');
+  loadingTurn.className='qa-turn';
+  loadingTurn.id=turnId;
+  loadingTurn.innerHTML=`<div class="qa-turn-q"><span class="qchev"><i class="ti ti-chevron-down"></i></span><span class="qtxt">${q}</span></div><div class="qa-ans"><i class="ti ti-loader spin"></i> Reading reports from Drive...</div>`;
+  out.appendChild(loadingTurn);
+  loadingTurn.scrollIntoView({behavior:'smooth',block:'nearest'});
+  document.getElementById('qaClearRow').style.display='flex';
+
+  const ansEl=()=>document.getElementById(turnId).querySelector('.qa-ans');
   const recentFiles=allFiles.filter(f=>!isVeryStale(f.modifiedTime));
 
   // STEP 1 — gather real content from Drive: PDFs (via Claude extraction) + Excel (via direct sheet parsing, fixed to scan all sheets, not just sheet[0])
@@ -1908,33 +1935,51 @@ async function askQ(){
 }
 Every number in "table" and "chart" must come from the provided content — never invent, estimate, or hallucinate a figure. If you cannot find real numbers for some part of the question, set has_sufficient_data=false and explain what's missing in "answer" instead of making numbers up.`;
 
+  // Build the running conversation: prior turns as user/assistant pairs, so follow-up
+  // questions ("what about the 2026 forecast for that?") resolve against earlier answers
+  // instead of overwriting them.
+  const priorMessages=[];
+  qaHistory.forEach(turn=>{
+    priorMessages.push({role:'user',content:turn.q});
+    priorMessages.push({role:'assistant',content:JSON.stringify(turn.parsed)});
+  });
+
   try{
     // STEP 2 — ask Claude to answer strictly from Drive content first
     let r=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1800,
-        system:`Nova Measuring Instruments market intelligence engine. ${MODEPR[qaMode]||''} Answer strictly using the Drive report content provided below — do not invent sheet names, files, or numbers that aren't present in the content. ${RESPONSE_SCHEMA}`,
-        messages:[{role:'user',content:`Drive report content:\n${driveContext}\n\nQuestion: ${q}`}]})});
+        system:`Nova Measuring Instruments market intelligence engine. ${MODEPR[qaMode]||''} This is an ongoing conversation — prior questions and your prior JSON answers are included for context; resolve pronouns/follow-ups (e.g. "what about 2026") against them. Answer strictly using the Drive report content provided below — do not invent sheet names, files, or numbers that aren't present in the content. ${RESPONSE_SCHEMA}`,
+        messages:[...priorMessages,{role:'user',content:`Drive report content:\n${driveContext}\n\nQuestion: ${q}`}]})});
     let d=await r.json();
     let parsed=parseQAJson(d);
     let origin='drive';
 
     // STEP 3 — fallback to a real web search if Drive didn't have what's needed
     if(!parsed||parsed.has_sufficient_data===false){
-      out.innerHTML='<div class="qa-ans"><i class="ti ti-loader spin"></i> Not enough data in Drive — searching the web...</div>';
+      ansEl().innerHTML='<i class="ti ti-loader spin"></i> Not enough data in Drive — searching the web...';
       const r2=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1800,
-          system:`Nova Measuring Instruments market intelligence engine. ${MODEPR[qaMode]||''} The internal Drive reports did not contain sufficient data for this question. Use the web_search tool to find current, real, sourced figures. Never invent numbers — only report figures you actually retrieved via search. ${RESPONSE_SCHEMA}`,
-          messages:[{role:'user',content:`Question: ${q}\n\n(Internal Drive reports checked first — insufficient: ${parsed?.answer||'no usable data found'})`}],
+          system:`Nova Measuring Instruments market intelligence engine. ${MODEPR[qaMode]||''} This is an ongoing conversation — prior questions and your prior JSON answers are included for context. The internal Drive reports did not contain sufficient data for this question. Use the web_search tool to find current, real, sourced figures. Never invent numbers — only report figures you actually retrieved via search. ${RESPONSE_SCHEMA}`,
+          messages:[...priorMessages,{role:'user',content:`Question: ${q}\n\n(Internal Drive reports checked first — insufficient: ${parsed?.answer||'no usable data found'})`}],
           tools:[{type:'web_search_20250305',name:'web_search'}]})});
       const d2=await r2.json();
       const parsed2=parseQAJson(d2);
       if(parsed2){parsed=parsed2;origin='web';}
-      else if(!parsed){out.innerHTML='<div class="qa-ans">Could not find this data in Drive or via web search.</div>';return;}
+      else if(!parsed){ansEl().innerHTML='Could not find this data in Drive or via web search.';return;}
     }
 
-    renderQAResult(out,parsed,origin,q);
-  }catch(e){out.innerHTML='<div class="qa-ans">Connection error.</div>';}
+    qaHistory.push({q,parsed,origin});
+    renderQAResult(turnId,parsed,origin,q);
+  }catch(e){ansEl().innerHTML='Connection error.';}
 }
+
+function clearQAThread(){
+  qaHistory=[];
+  document.getElementById('qaOut').innerHTML='';
+  document.getElementById('qaClearRow').style.display='none';
+}
+
+function toggleQATurn(id){document.getElementById(id).classList.toggle('collapsed');}
 
 // Extracts the final JSON object from a Claude response that may include text blocks,
 // tool_use/tool_result blocks (from web_search), and markdown fences around the JSON.
@@ -1949,7 +1994,8 @@ function parseQAJson(d){
   }catch{return null;}
 }
 
-function renderQAResult(out,parsed,origin,q){
+function renderQAResult(turnId,parsed,origin,q){
+  const turnEl=document.getElementById(turnId);
   const originTag=origin==='web'
     ?'<span class="qa-origin web"><i class="ti ti-world"></i> From web search</span>'
     :'<span class="qa-origin drive"><i class="ti ti-folder"></i> From Drive reports</span>';
@@ -1973,7 +2019,7 @@ function renderQAResult(out,parsed,origin,q){
 
   let chartId='';
   if(parsed.chart&&Array.isArray(parsed.chart.labels)&&Array.isArray(parsed.chart.datasets)&&parsed.chart.datasets.length){
-    chartId='qaChart_'+Date.now();
+    chartId='qaChart_'+turnId;
   }
 
   let summaryHtml='';
@@ -1984,7 +2030,7 @@ function renderQAResult(out,parsed,origin,q){
   const srcs=[...new Set(allFiles.map(f=>guessSource(f.name)).filter(Boolean))].join(', ');
   const sourceNote=parsed.source_note?`<div class="qa-src">${parsed.source_note}</div>`:(srcs?`<div class="qa-src">Sources: ${srcs}</div>`:'');
 
-  out.innerHTML=`<div class="qa-ans">
+  turnEl.innerHTML=`<div class="qa-turn-q" onclick="toggleQATurn('${turnId}')"><span class="qchev"><i class="ti ti-chevron-down"></i></span><span class="qtxt">${q}</span></div><div class="qa-ans">
     ${originTag}
     <div>${answerHtml}</div>
     ${tableHtml}
