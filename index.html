@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v3.8</title>
+<title>Nova Market Intelligence v3.9</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -314,7 +314,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.8</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.9</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -600,9 +600,6 @@ footer em{color:var(--p);font-style:normal;}
     </div>
   </div>
 
-  <!-- ANALYST CARDS -->
-  <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;">Analyst sources</div>
-  <div class="ascr" id="aCards"><div class="na-msg" style="padding:12px;">No sources detected yet</div></div>
   <!-- SOURCE FILES MODAL -->
   <div id="srcModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
     <div style="background:var(--w);border-radius:var(--r14);padding:20px;width:90%;max-width:600px;max-height:75vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);">
@@ -638,10 +635,14 @@ footer em{color:var(--p);font-style:normal;}
     </div>
   </div>
 
+  <!-- ANALYST CARDS -->
+  <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;margin-top:24px;">Analyst sources</div>
+  <div class="ascr" id="aCards"><div class="na-msg" style="padding:12px;">No sources detected yet</div></div>
+
   <div class="metrics" style="margin-top:24px;">
-    <div class="metric"><div class="mv" id="mF">—</div><div class="ml">Files indexed</div></div>
-    <div class="metric"><div class="mv" id="mS">—</div><div class="ml">Sources</div></div>
-    <div class="metric"><div class="mv" id="mP">—</div><div class="ml">Parsed</div></div>
+    <div class="metric" style="cursor:pointer;" onclick="document.getElementById('filesModal').style.display='flex'"><div class="mv" id="mF">—</div><div class="ml">Files indexed</div></div>
+    <div class="metric" style="cursor:pointer;" onclick="document.getElementById('filesModal').style.display='flex'"><div class="mv" id="mS">—</div><div class="ml">Sources</div></div>
+    <div class="metric" style="cursor:pointer;" onclick="document.getElementById('filesModal').style.display='flex'"><div class="mv" id="mP">—</div><div class="ml">Parsed</div></div>
     <div class="metric"><div class="mv" id="mE">—</div><div class="ml">Parse errors</div></div>
   </div>
 
@@ -779,7 +780,7 @@ async function parseFiles(files,forceRefresh){
       if(cd.pcTi)Object.entries(cd.pcTi).forEach(([k,v])=>{if(!pcData.ti[k])pcData.ti[k]={};Object.assign(pcData.ti[k],v);});
       if(cd.pcGartner)Object.entries(cd.pcGartner).forEach(([k,v])=>{if(!pcData.gartner[k])pcData.gartner[k]={};Object.assign(pcData.gartner[k],v);});
       if(cd.capexAnalyst)Object.entries(cd.capexAnalyst).forEach(([k,v])=>{if(!capexByAnalyst[k])capexByAnalyst[k]={};Object.entries(v).forEach(([y,n])=>{capexByAnalyst[k][y]=(capexByAnalyst[k][y]||0)+n;});});
-      parseLog.push({file:f.name,status:cd.found?'ok':'skip',msg:cd.found?`Found: ${cd.cats.join(', ')}`:'No recognizable data patterns'});
+      parseLog.push({file:f.name,id:f.id,status:cd.found?'ok':'skip',msg:cd.found?`Found: ${cd.cats.join(', ')}`:'No recognizable data patterns'});
       n++;continue;
     }
     try{
@@ -808,8 +809,8 @@ async function parseFiles(files,forceRefresh){
         else{const diff={};Object.keys(capexByAnalyst[k]).forEach(y=>{if(!snapBefore.capexAnalyst[k][y])diff[y]=capexByAnalyst[k][y];});if(Object.keys(diff).length)snap.capexAnalyst[k]=diff;}
       });
       cache[ck]=snap;
-      parseLog.push({file:f.name,status:res.found?'ok':'skip',msg:res.found?`Found: ${res.cats.join(', ')}`:'No recognizable data patterns'});
-    }catch(e){parseLog.push({file:f.name,status:'warn',msg:`Error: ${e.message}`});errors++;}
+      parseLog.push({file:f.name,id:f.id,status:res.found?'ok':'skip',msg:res.found?`Found: ${res.cats.join(', ')}`:'No recognizable data patterns'});
+    }catch(e){parseLog.push({file:f.name,id:f.id,status:'warn',msg:`Error: ${e.message}`});errors++;}
     n++;
   }
   // clean old cache entries
@@ -1298,7 +1299,8 @@ function renderParseStatus(){
   el.innerHTML=parseLog.map(p=>{
     const c=p.status==='ok'?'var(--bull)':p.status==='warn'?'var(--bear)':'var(--t3)';
     const icon=p.status==='ok'?'ti-check':p.status==='warn'?'ti-alert-triangle':'ti-minus';
-    return`<div class="ps-item"><i class="ti ${icon}" style="color:${c}"></i><span style="color:${c};font-weight:${p.status==='warn'?'600':'400'}">${p.file.substring(0,50)}</span><span style="color:var(--t3)"> — ${p.msg}</span></div>`;
+    const nameHtml=p.id?`<a href="https://drive.google.com/file/d/${p.id}/view" target="_blank" rel="noopener" style="color:${c};font-weight:${p.status==='warn'?'600':'400'};text-decoration:none;">${p.file.substring(0,50)}</a>`:`<span style="color:${c};font-weight:${p.status==='warn'?'600':'400'}">${p.file.substring(0,50)}</span>`;
+    return`<div class="ps-item"><i class="ti ${icon}" style="color:${c}"></i>${nameHtml}<span style="color:var(--t3)"> — ${p.msg}</span></div>`;
   }).join('');
 }
 
@@ -1625,10 +1627,11 @@ function showSourceFiles(src){
     const size=f.size?(f.size>1048576?(f.size/1048576).toFixed(1)+'MB':Math.round(f.size/1024)+'KB'):'';
     const stale=isStale(f.modifiedTime);
     const icon=['xlsx','xlsm','xls'].includes(ext)?'ti-file-spreadsheet':ext==='pdf'?'ti-file-type-pdf':ext==='pptx'?'ti-presentation':'ti-file';
+    const driveUrl=`https://drive.google.com/file/d/${f.id}/view`;
     return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--b1);">
       <i class="ti ${icon}" style="font-size:18px;color:${stale?'var(--t4)':col};flex-shrink:0;"></i>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${stale?'color:var(--t3);text-decoration:line-through;':''}">${f.name}</div>
+        <a href="${driveUrl}" target="_blank" rel="noopener" style="font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;color:${stale?'var(--t3)':'var(--ink)'};text-decoration:${stale?'line-through':'none'};">${f.name} <i class="ti ti-external-link" style="font-size:10px;opacity:0.5;"></i></a>
         <div style="font-size:10px;color:var(--t3);">${date}${size?' · '+size:''}${stale?' · excluded':''}</div>
       </div>
     </div>`;
@@ -1871,7 +1874,14 @@ async function askQ(){
       body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,
         system:`Nova Measuring Instruments market intelligence. ${MODEPR[qaMode]||''} Base your answer on the actual report content provided. Cite specific sources and data points. Be concise and actionable.`,
         messages:[{role:'user',content:`${context}\n\nQuestion: ${q}`}]})});
-    const d=await r.json();const text=d.content?.find(b=>b.type==='text')?.text||'No answer.';
+    const d=await r.json();let text=d.content?.find(b=>b.type==='text')?.text||'No answer.';
+    // Turn any mentioned filenames into clickable Drive links
+    allFiles.forEach(f=>{
+      if(text.includes(f.name)){
+        const safe=f.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        text=text.replace(new RegExp(safe,'g'),`<a href="https://drive.google.com/file/d/${f.id}/view" target="_blank" rel="noopener" style="color:var(--p);text-decoration:underline;">${f.name}</a>`);
+      }
+    });
     const srcs=[...new Set(allFiles.map(f=>guessSource(f.name)))].join(', ');
     out.innerHTML=`<div class="qa-ans">${text.replace(/\n/g,'<br>')}<div class="qa-src">Sources: ${srcs}</div></div>`;
   }catch(e){out.innerHTML='<div class="qa-ans">Connection error.</div>';}
