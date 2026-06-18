@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v3.9</title>
+<title>Nova Market Intelligence v4.0</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -186,6 +186,18 @@ table.mt tr:last-child td{border-bottom:none;}
 .chip:hover{border-color:var(--pb);color:var(--p);}
 .qa-ans{margin-top:12px;font-size:13px;line-height:1.7;background:var(--pdim);border-radius:var(--r10);padding:14px 16px;border-left:3px solid var(--p);}
 .qa-src{font-size:10px;color:var(--t3);margin-top:8px;padding-top:6px;border-top:1px solid var(--pb);}
+.qa-origin{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;margin-bottom:10px;}
+.qa-origin.drive{background:var(--pdim);color:var(--p);border:1px solid var(--pb);}
+.qa-origin.web{background:var(--bg);color:var(--t2);border:1px solid var(--b1);}
+.qa-table-wrap{overflow-x:auto;margin:10px 0;}
+.qa-table{width:100%;border-collapse:collapse;font-size:12px;background:var(--w);border-radius:var(--r6);overflow:hidden;}
+.qa-table th{background:var(--bg);color:var(--t2);text-align:left;padding:6px 10px;font-weight:600;border-bottom:1px solid var(--b1);white-space:nowrap;}
+.qa-table td{padding:6px 10px;border-bottom:1px solid var(--b1);color:var(--t1);white-space:nowrap;}
+.qa-table tr:last-child td{border-bottom:none;}
+.qa-chart-wrap{position:relative;height:280px;margin:14px 0;background:var(--w);border-radius:var(--r6);padding:10px;}
+.qa-summary{margin-top:10px;}
+.qa-summary ul{margin:6px 0 0 18px;padding:0;}
+.qa-summary li{margin-bottom:4px;}
 .na-msg{font-size:12px;color:var(--t3);text-align:center;padding:32px;font-style:italic;}
 .stale-warning{font-size:11px;color:var(--bear);background:var(--bearbg);border:1px solid rgba(220,38,38,.2);border-radius:var(--r6);padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -314,7 +326,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v3.9</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v4.0</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -1801,10 +1813,23 @@ async function fetchFileText(f){
       PDF_TEXT_CACHE[f.id]=text;
       return text;
     } else {
-      // Excel — extract first sheet as CSV summary
+      // Excel — scan ALL sheets, keep the ones that actually contain numeric data
+      // (many Gartner/market-share files put the real data in sheet 2, 3, etc.,
+      // with "Contents"/"Definitions"/"Glossary" sheets first — taking only
+      // sheet[0] silently misses the data entirely).
       const wb=XLSX.read(ab,{type:'array'});
-      const sheet=wb.Sheets[wb.SheetNames[0]];
-      const csv=XLSX.utils.sheet_to_csv(sheet,{blankrows:false}).split('\n').slice(0,30).join('\n');
+      const skip=/^(contents|definitions|glossary|tips|currencies|parameters|exchange rates)$/i;
+      const chunks=[];
+      for(const name of wb.SheetNames){
+        if(skip.test(name.trim()))continue;
+        const sheet=wb.Sheets[name];
+        const csv=XLSX.utils.sheet_to_csv(sheet,{blankrows:false});
+        const lines=csv.split('\n').filter(l=>l.trim().length>0);
+        if(lines.length<2)continue; // empty/structural sheet, skip
+        chunks.push(`--- Sheet: ${name} ---\n${lines.slice(0,60).join('\n')}`);
+        if(chunks.length>=4)break; // cap how many sheets we pull per file
+      }
+      const csv=chunks.join('\n\n');
       PDF_TEXT_CACHE[f.id]=csv;
       return csv;
     }
@@ -1856,35 +1881,131 @@ function setMode(m,btn){qaMode=m;document.querySelectorAll('.mt').forEach(t=>t.c
 window.addEventListener('DOMContentLoaded',()=>{document.getElementById('chips').innerHTML=(CHIPS.general||[]).map(q=>`<span class="chip" onclick="document.getElementById('qaIn').value='${q}'">${q}</span>`).join('');});
 async function askQ(){
   const q=document.getElementById('qaIn').value.trim();if(!q)return;
-  const out=document.getElementById('qaOut');out.innerHTML='<div class="qa-ans"><i class="ti ti-loader spin"></i> Reading reports and analyzing...</div>';
+  const out=document.getElementById('qaOut');
+  out.innerHTML='<div class="qa-ans"><i class="ti ti-loader spin"></i> Reading reports from Drive...</div>';
   const recentFiles=allFiles.filter(f=>!isVeryStale(f.modifiedTime));
 
-  // Fetch content from relevant files
+  // STEP 1 — gather real content from Drive: PDFs (via Claude extraction) + Excel (via direct sheet parsing, fixed to scan all sheets, not just sheet[0])
   const pdfs=recentFiles.filter(f=>f.name.match(/\.pdf$/i)).slice(0,5);
+  const xlsxFiles=recentFiles.filter(f=>f.name.match(/\.xlsx?$|\.xlsm$/i)).slice(0,5);
+  const filesToRead=[...pdfs,...xlsxFiles];
   const contents=[];
-  for(const f of pdfs){
+  for(const f of filesToRead){
     const text=await fetchFileText(f);
-    if(text&&text.length>50)contents.push(`=== ${f.name} ===\n${text.substring(0,500)}`);
+    if(text&&text.length>50)contents.push(`=== ${f.name} [${guessSource(f.name)}] ===\n${text.substring(0,2500)}`);
   }
-  const flist=recentFiles.slice(0,15).map(f=>`${f.name} [${guessSource(f.name)}]`).join('\n');
-  const context=contents.length>0?contents.join('\n\n')+'\n\nAll files:\n'+flist:'Files:\n'+flist;
+  const flist=recentFiles.slice(0,20).map(f=>`${f.name} [${guessSource(f.name)}]`).join('\n');
+  const driveContext=contents.length>0?contents.join('\n\n')+'\n\nAll Drive files:\n'+flist:'Files in Drive:\n'+flist;
+
+  const RESPONSE_SCHEMA=`Respond ONLY with a single JSON object (no markdown fences, no prose outside the JSON). Schema:
+{
+  "answer": "string — direct prose answer to the question, 2-5 sentences",
+  "has_sufficient_data": boolean,  // true only if the Drive content above actually contains the specific numbers needed to answer; false if you would have to guess, estimate, or the data simply isn't present
+  "table": null OR { "title": "string", "columns": ["string", ...], "rows": [["string"|number, ...], ...] },  // include a table whenever the question implies comparing numbers (market share, forecasts, rankings, trends over years). Use null only for purely qualitative questions.
+  "chart": null OR { "type": "bar"|"line", "title": "string", "labels": ["string", ...], "datasets": [{"label":"string","data":[number,...]}, ...] },  // chart data must exactly mirror the table when both are present
+  "summary": ["string", ...],  // 3-5 short executive-summary bullet points, Nova-relevant where possible
+  "source_note": "string"  // which specific files/sheets the numbers came from, or empty string
+}
+Every number in "table" and "chart" must come from the provided content — never invent, estimate, or hallucinate a figure. If you cannot find real numbers for some part of the question, set has_sufficient_data=false and explain what's missing in "answer" instead of making numbers up.`;
 
   try{
-    const r=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,
-        system:`Nova Measuring Instruments market intelligence. ${MODEPR[qaMode]||''} Base your answer on the actual report content provided. Cite specific sources and data points. Be concise and actionable.`,
-        messages:[{role:'user',content:`${context}\n\nQuestion: ${q}`}]})});
-    const d=await r.json();let text=d.content?.find(b=>b.type==='text')?.text||'No answer.';
-    // Turn any mentioned filenames into clickable Drive links
-    allFiles.forEach(f=>{
-      if(text.includes(f.name)){
-        const safe=f.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-        text=text.replace(new RegExp(safe,'g'),`<a href="https://drive.google.com/file/d/${f.id}/view" target="_blank" rel="noopener" style="color:var(--p);text-decoration:underline;">${f.name}</a>`);
-      }
-    });
-    const srcs=[...new Set(allFiles.map(f=>guessSource(f.name)))].join(', ');
-    out.innerHTML=`<div class="qa-ans">${text.replace(/\n/g,'<br>')}<div class="qa-src">Sources: ${srcs}</div></div>`;
+    // STEP 2 — ask Claude to answer strictly from Drive content first
+    let r=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1800,
+        system:`Nova Measuring Instruments market intelligence engine. ${MODEPR[qaMode]||''} Answer strictly using the Drive report content provided below — do not invent sheet names, files, or numbers that aren't present in the content. ${RESPONSE_SCHEMA}`,
+        messages:[{role:'user',content:`Drive report content:\n${driveContext}\n\nQuestion: ${q}`}]})});
+    let d=await r.json();
+    let parsed=parseQAJson(d);
+    let origin='drive';
+
+    // STEP 3 — fallback to a real web search if Drive didn't have what's needed
+    if(!parsed||parsed.has_sufficient_data===false){
+      out.innerHTML='<div class="qa-ans"><i class="ti ti-loader spin"></i> Not enough data in Drive — searching the web...</div>';
+      const r2=await fetch(`${WORKER_URL}/anthropic`,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1800,
+          system:`Nova Measuring Instruments market intelligence engine. ${MODEPR[qaMode]||''} The internal Drive reports did not contain sufficient data for this question. Use the web_search tool to find current, real, sourced figures. Never invent numbers — only report figures you actually retrieved via search. ${RESPONSE_SCHEMA}`,
+          messages:[{role:'user',content:`Question: ${q}\n\n(Internal Drive reports checked first — insufficient: ${parsed?.answer||'no usable data found'})`}],
+          tools:[{type:'web_search_20250305',name:'web_search'}]})});
+      const d2=await r2.json();
+      const parsed2=parseQAJson(d2);
+      if(parsed2){parsed=parsed2;origin='web';}
+      else if(!parsed){out.innerHTML='<div class="qa-ans">Could not find this data in Drive or via web search.</div>';return;}
+    }
+
+    renderQAResult(out,parsed,origin,q);
   }catch(e){out.innerHTML='<div class="qa-ans">Connection error.</div>';}
+}
+
+// Extracts the final JSON object from a Claude response that may include text blocks,
+// tool_use/tool_result blocks (from web_search), and markdown fences around the JSON.
+function parseQAJson(d){
+  try{
+    const textBlocks=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text);
+    const raw=textBlocks.length?textBlocks[textBlocks.length-1]:'';
+    const cleaned=raw.replace(/```json|```/g,'').trim();
+    const match=cleaned.match(/\{[\s\S]*\}/);
+    if(!match)return null;
+    return JSON.parse(match[0]);
+  }catch{return null;}
+}
+
+function renderQAResult(out,parsed,origin,q){
+  const originTag=origin==='web'
+    ?'<span class="qa-origin web"><i class="ti ti-world"></i> From web search</span>'
+    :'<span class="qa-origin drive"><i class="ti ti-folder"></i> From Drive reports</span>';
+
+  let answerHtml=(parsed.answer||'').replace(/\n/g,'<br>');
+  allFiles.forEach(f=>{
+    if(answerHtml.includes(f.name)){
+      const safe=f.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      answerHtml=answerHtml.replace(new RegExp(safe,'g'),`<a href="https://drive.google.com/file/d/${f.id}/view" target="_blank" rel="noopener" style="color:var(--p);text-decoration:underline;">${f.name}</a>`);
+    }
+  });
+
+  let tableHtml='';
+  if(parsed.table&&Array.isArray(parsed.table.rows)&&parsed.table.rows.length){
+    const cols=parsed.table.columns||[];
+    tableHtml=`<div class="qa-table-wrap"><table class="qa-table">
+      <thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+      <tbody>${parsed.table.rows.map(row=>`<tr>${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table></div>`;
+  }
+
+  let chartId='';
+  if(parsed.chart&&Array.isArray(parsed.chart.labels)&&Array.isArray(parsed.chart.datasets)&&parsed.chart.datasets.length){
+    chartId='qaChart_'+Date.now();
+  }
+
+  let summaryHtml='';
+  if(Array.isArray(parsed.summary)&&parsed.summary.length){
+    summaryHtml=`<div class="qa-summary"><strong>Executive summary:</strong><ul>${parsed.summary.map(s=>`<li>${s}</li>`).join('')}</ul></div>`;
+  }
+
+  const srcs=[...new Set(allFiles.map(f=>guessSource(f.name)).filter(Boolean))].join(', ');
+  const sourceNote=parsed.source_note?`<div class="qa-src">${parsed.source_note}</div>`:(srcs?`<div class="qa-src">Sources: ${srcs}</div>`:'');
+
+  out.innerHTML=`<div class="qa-ans">
+    ${originTag}
+    <div>${answerHtml}</div>
+    ${tableHtml}
+    ${chartId?`<div class="qa-chart-wrap"><canvas id="${chartId}"></canvas></div>`:''}
+    ${summaryHtml}
+    ${sourceNote}
+  </div>`;
+
+  if(chartId){
+    const c=parsed.chart;
+    new Chart(document.getElementById(chartId).getContext('2d'),{
+      type:c.type==='bar'?'bar':'line',
+      data:{labels:c.labels,datasets:c.datasets.map((ds,i)=>({
+        label:ds.label,data:ds.data,
+        borderColor:PALETTE[i%PALETTE.length],
+        backgroundColor:c.type==='bar'?PALETTE[i%PALETTE.length]+'BB':PALETTE[i%PALETTE.length]+'18',
+        borderWidth:2,pointRadius:3,tension:.25,fill:false
+      }))},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{title:{display:!!c.title,text:c.title||''},legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}},scales:{y:{beginAtZero:false}}}
+    });
+  }
 }
 
 /* ── MISC ── */
