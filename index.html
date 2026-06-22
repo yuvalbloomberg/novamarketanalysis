@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nova Market Intelligence v4.1</title>
+<title>Nova Market Intelligence v4.2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -338,7 +338,7 @@ footer em{color:var(--p);font-style:normal;}
       <text x="0" y="26" font-family="'Segoe UI',Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-1" fill="white">NOVA</text>
     </svg>
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v4.1</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.75);font-weight:400;letter-spacing:0.02em;">Market Intelligence <span style="font-size:10px;opacity:0.6;margin-left:4px;">v4.2</span></div>
       <div class="brand-sub" id="topMeta">Connect to Google Drive to get started</div>
     </div>
   </div>
@@ -435,7 +435,7 @@ footer em{color:var(--p);font-style:normal;}
         <div class="cat-title">WFE Forecast ($M)</div>
         <div class="cat-actions">
           <span class="src-badge src-direct"><i class="ti ti-database"></i> Direct from reports</span>
-          <button class="act-btn" onclick="toggleQBack('wfe')" id="qback-wfe"><i class="ti ti-arrows-diff"></i> Prev Quarter</button>
+          <button class="act-btn" onclick="toggleQBack('wfe')" id="qback-wfe"><i class="ti ti-arrows-diff"></i> Prev Quarter</button><span class="prev-date-lbl" style="font-size:10px;color:var(--t3);margin-right:4px;"></span>
           <button class="act-btn" onclick="downloadChart('wfe')"><i class="ti ti-download"></i> PNG</button>
           <button class="act-btn" onclick="downloadCSV('wfe')"><i class="ti ti-file-spreadsheet"></i> CSV</button>
         </div>
@@ -451,7 +451,7 @@ footer em{color:var(--p);font-style:normal;}
   <div class="cat-panel" id="panel-capex">
     <div class="panel">
       <div class="cat-header">
-        <div class="cat-title">Capex Forecast ($M)</div>
+        <div class="cat-title">Capex Forecast ($M) <span style="font-size:10px;font-weight:400;color:var(--t3);margin-right:6px;">Analyst estimates</span></div>
         <div class="cat-actions">
           <span class="src-badge src-direct"><i class="ti ti-database"></i> Direct from reports</span>
           <div style="display:flex;border:1px solid var(--b2);border-radius:var(--r6);overflow:hidden;">
@@ -476,7 +476,7 @@ footer em{color:var(--p);font-style:normal;}
         <div class="cat-title">Industry Revenue Forecast ($M)</div>
         <div class="cat-actions">
           <span class="src-badge src-ai"><i class="ti ti-robot"></i> AI-extracted · verify before use</span>
-          <button class="act-btn" onclick="toggleQBack('revenue')" id="qback-revenue"><i class="ti ti-arrows-diff"></i> Prev Quarter</button>
+          <button class="act-btn" onclick="toggleQBack('revenue')" id="qback-revenue"><i class="ti ti-arrows-diff"></i> Prev Quarter</button><span class="prev-date-lbl" style="font-size:10px;color:var(--t3);margin-right:4px;"></span>
           <button class="act-btn" onclick="downloadChart('revenue')"><i class="ti ti-download"></i> PNG</button>
           <button class="act-btn" onclick="downloadCSV('revenue')"><i class="ti ti-file-spreadsheet"></i> CSV</button>
         </div>
@@ -705,7 +705,7 @@ let parseLog=[];
 const PALETTE=['#6B21D6','#DC2626','#059669','#D97706','#2D6BA0','#A855F7','#0891B2','#374151','#7C3AED','#B45309'];
 const srcClr={};let ci=0;
 function clr(s){if(!srcClr[s])srcClr[s]=PALETTE[ci++%PALETTE.length];return srcClr[s];}
-const SRC_SPEC={'Gartner':'Cycle & TAM','TechInsights':'Node Roadmaps & WFE','JPMorgan':'WFE & Financial','Goldman Sachs':'Macro & Risk','Yole':'Packaging Expert','SEMI':'Equipment Orders','Barclays':'Supply Chain','Evercore':'SPE Positioning','Nova Internal':'Internal','Other':'Research'};
+const SRC_SPEC={'Gartner':'Cycle & TAM','TechInsights':'Node Roadmaps & WFE','JPMorgan':'WFE & Financial','Goldman Sachs':'Macro & Risk','Yole':'Packaging Expert','SEMI':'Equipment Orders','Barclays':'Supply Chain','Evercore':'SPE Positioning','Jefferies':'WFE & CapEx Model','Nova Internal':'Internal','Other':'Research'};
 
 /* ── SOURCE DETECTION ── */
 function guessSource(name){
@@ -719,6 +719,7 @@ function guessSource(name){
   if(n.includes('bofa')||n.includes('bank of america')||n.includes('semicapexmodel')||n.includes('semi_capex'))return'BofA';
   if(n.includes('barclays'))return'Barclays';
   if(n.includes('evercore'))return'Evercore';
+  if(n.includes('jefferies')||n.includes('jef_')||n.includes('wfe_model_client')||n.includes('copy_of_wfe_model')||n.includes('wfe model client'))return'Jefferies';
   if(n.includes('ciq'))return'S&P CIQ';
   if(n.includes('semi_wff')||n.includes('semi wff')||(n.startsWith('semi')&&(n.includes('world fab')||n.includes('wff')||n.includes('fab forecast'))))return'SEMI';
   if(n.startsWith('ti ')||n.includes('ti_')||n.includes('techinsight')||n.includes('vlsi')||n.includes('wfe forecast'))return'TechInsights';
@@ -1244,18 +1245,21 @@ async function parseExcel(f){
           system:`You are extracting semiconductor market data from Excel sheets for a dashboard. Return ONLY valid JSON, no markdown, no explanation.
 
 Extract these data types if present (all values in $M):
-- wfe: total Wafer Fab Equipment spending by source/analyst {"SourceName": {"2024": 115000, "2025": 125000}}
-- capex: capital expenditure by company {"TSMC": {"2024": 30000}, "Samsung": {}, "Micron": {}, "Intel": {}, "SK hynix": {}}  
-- revenue: total semiconductor market revenue {"SourceName": {"2024": 600000}}
+- wfe: total Wafer Fab Equipment spending forecast by source/analyst {"SourceName": {"2024": 115000, "2025": 125000}}
+- capex: capital expenditure FORECAST by company (consensus/analyst estimates, NOT actual reported spending) {"TSMC": {"2024": 30000}, "Samsung": {}, "Micron": {}, "Intel": {}, "SK hynix": {}}
+  * For Jefferies files: extract from "Bottoms Up Capex" sheet, columns 2020-2027E
+  * For TechInsights files: extract from "Top 20 CapEx" sheet
+  * Use 2026E/2027E columns (forecast years), include 2023-2025 actuals as baseline context
+- revenue: total semiconductor market revenue forecast {"SourceName": {"2024": 600000}}
 
 Rules:
-- Years only 2019-2031, strip "YR" suffix if present (e.g. "2024 YR" → "2024")
+- Years only 2019-2031, strip "E" suffix if present (e.g. "2026E" → "2026")
 - WFE values typically $50B-$200B range (50000-200000 in $M)
-- Revenue values typically $400B-$700B range (400000-700000 in $M)  
-- Capex per company typically $5B-$50B range
+- Revenue values typically $400B-$700B range (400000-700000 in $M)
+- Capex per company typically $5B-$80B range
 - Use "Grand Total" or total rows, not subtotals
 - If data not found for a type, return empty object {}
-- Source name = analyst firm (Gartner, TechInsights, JPMorgan, etc.) or file context
+- Source name = analyst firm (Gartner, TechInsights, JPMorgan, Jefferies, etc.)
 
 Return: {"wfe":{},"capex":{},"revenue":{}}`,
           messages:[{role:'user',content:`File: ${f.name}\n\n${prompt}`}]})});
@@ -1264,9 +1268,9 @@ Return: {"wfe":{},"capex":{},"revenue":{}}`,
       let parsed;
       try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch{parsed=null;}
       if(parsed){
+        const KNOWN_ANALYSTS_WFE=['gartner','techinsights','semi','bofa','barclays','jpmorgan','goldman sachs','yole','evercore','jefferies','s&p ciq','nova internal'];
         if(parsed.wfe)Object.entries(parsed.wfe).forEach(([k,v])=>{
           const kl=k.toLowerCase();
-          const KNOWN_ANALYSTS_WFE=['gartner','techinsights','semi','bofa','barclays','jpmorgan','goldman sachs','yole','evercore','s&p ciq','nova internal'];
           if(!KNOWN_ANALYSTS_WFE.includes(kl))return;
           // Skip if direct parser already found this source
           if(datasets.wfe[k]&&Object.keys(datasets.wfe[k]).length>0)return;
@@ -1274,10 +1278,11 @@ Return: {"wfe":{},"capex":{},"revenue":{}}`,
         });
         if(parsed.capex){
           const fileCapexTotal={}; // year -> sum across companies for THIS file/analyst
-          ['TSMC','Samsung','Micron','Intel','SK hynix'].forEach(co=>{
+          ['TSMC','Samsung','Micron','Intel','SK hynix','SK Hynix'].forEach(co=>{
+            const coKey=co==='SK Hynix'?'SK hynix':co;
             if(parsed.capex[co]&&Object.keys(parsed.capex[co]).length){
-              if(!datasets.capex[co])datasets.capex[co]={};
-              Object.assign(datasets.capex[co],parsed.capex[co]);
+              if(!datasets.capex[coKey])datasets.capex[coKey]={};
+              Object.assign(datasets.capex[coKey],parsed.capex[co]);
               if(!cats.includes('Capex'))cats.push('Capex');
               Object.entries(parsed.capex[co]).forEach(([y,v])=>{
                 if(typeof v==='number'&&!isNaN(v))fileCapexTotal[y]=(fileCapexTotal[y]||0)+v;
@@ -1285,24 +1290,20 @@ Return: {"wfe":{},"capex":{},"revenue":{}}`,
             }
           });
           // Aggregate into capexByAnalyst keyed by this file's source
-          // Dedup: skip if this exact total already exists for this analyst (handles duplicate uploads with identical content, e.g. "New.xlsx" + "New1.xlsx")
           if(Object.keys(fileCapexTotal).length&&src){
             const existing=capexByAnalyst[src];
             const isDuplicate=existing&&Object.keys(fileCapexTotal).every(y=>existing[y]===fileCapexTotal[y]);
             if(!isDuplicate){
               if(!capexByAnalyst[src])capexByAnalyst[src]={};
               Object.entries(fileCapexTotal).forEach(([y,v])=>{
-                // Only add if this year doesn't already have a value (avoid double counting partial-overlap duplicate files)
                 if(capexByAnalyst[src][y]===undefined)capexByAnalyst[src][y]=v;
               });
             }
           }
         }
+        const KNOWN_ANALYSTS=['gartner','techinsights','semi','bofa','barclays','jpmorgan','goldman sachs','yole','evercore','jefferies','s&p ciq','nova internal'];
         if(parsed.revenue)Object.entries(parsed.revenue).forEach(([k,v])=>{
-          // Skip junk source names from AI extraction
           const kl=k.toLowerCase();
-          // Whitelist known analyst names; reject anything else (catches all AI-hallucinated junk names like File_Context, File_Data, Sheet2, Internal Model, etc.)
-          const KNOWN_ANALYSTS=['gartner','techinsights','semi','bofa','barclays','jpmorgan','goldman sachs','yole','evercore','s&p ciq','nova internal'];
           if(!KNOWN_ANALYSTS.includes(kl))return;
           // Skip if direct parser already found this source
           if(datasets.revenue[k]&&Object.keys(datasets.revenue[k]).length>0)return;
@@ -1397,6 +1398,8 @@ if(prevDatasets.revenue&&Object.keys(prevDatasets.revenue).some(k=>k.toLowerCase
   try{localStorage.removeItem('nova_prev_datasets');}catch{}
 }
 console.log('[PREV-QUARTER] loaded sources:', JSON.stringify({wfe:Object.keys(prevDatasets.wfe||{}),capex:Object.keys(prevDatasets.capex||{}),revenue:Object.keys(prevDatasets.revenue||{})}));
+// Update prev-date labels on DOM load
+document.addEventListener('DOMContentLoaded',()=>{ try{updatePrevDateLabel();}catch{} });
 let showingQBack=false;
 
 function toggleQBack(cat){
@@ -1928,8 +1931,9 @@ async function askQ(){
 {
   "answer": "string — direct prose answer to the question, 2-5 sentences",
   "has_sufficient_data": boolean,  // true only if the Drive content above actually contains the specific numbers needed to answer; false if you would have to guess, estimate, or the data simply isn't present
-  "table": null OR { "title": "string", "columns": ["string", ...], "rows": [["string"|number, ...], ...] },  // include a table whenever the question implies comparing numbers (market share, forecasts, rankings, trends over years). Use null only for purely qualitative questions.
-  "chart": null OR { "type": "bar"|"line", "title": "string", "labels": ["string", ...], "datasets": [{"label":"string","data":[number,...]}, ...] },  // chart data must exactly mirror the table when both are present
+  "data_source": "drive" | "web" | "mixed",  // "drive" only if ALL key figures came from the provided Drive files; "web" if primary figures came from web search; "mixed" if both
+  "table": null OR { "title": "string", "columns": ["string", ...], "rows": [["string"|number, ...], ...] },
+  "chart": null OR { "type": "bar"|"line", "title": "string", "labels": ["string", ...], "datasets": [{"label":"string","data":[number,...]}, ...] },
   "summary": ["string", ...],  // 3-5 short executive-summary bullet points, Nova-relevant where possible
   "source_note": "string"  // which specific files/sheets the numbers came from, or empty string
 }
@@ -1980,6 +1984,20 @@ function clearQAThread(){
 }
 
 function toggleQATurn(id){document.getElementById(id).classList.toggle('collapsed');}
+function downloadQAChart(chartId){
+  const canvas=document.getElementById(chartId);
+  if(!canvas)return;
+  // Draw on white background (canvas is transparent by default)
+  const tmp=document.createElement('canvas');
+  tmp.width=canvas.width;tmp.height=canvas.height;
+  const ctx=tmp.getContext('2d');
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,tmp.width,tmp.height);
+  ctx.drawImage(canvas,0,0);
+  const a=document.createElement('a');
+  a.href=tmp.toDataURL('image/png');
+  a.download=`nova-chart-${new Date().toISOString().slice(0,10)}.png`;
+  a.click();
+}
 
 // Extracts the final JSON object from a Claude response that may include text blocks,
 // tool_use/tool_result blocks (from web_search), and markdown fences around the JSON.
@@ -1996,8 +2014,12 @@ function parseQAJson(d){
 
 function renderQAResult(turnId,parsed,origin,q){
   const turnEl=document.getElementById(turnId);
-  const originTag=origin==='web'
+  // Use data_source field from JSON if present (more accurate than origin variable)
+  const src=parsed.data_source||origin;
+  const originTag=src==='web'
     ?'<span class="qa-origin web"><i class="ti ti-world"></i> From web search</span>'
+    :src==='mixed'
+    ?'<span class="qa-origin web"><i class="ti ti-git-merge"></i> Drive + web</span>'
     :'<span class="qa-origin drive"><i class="ti ti-folder"></i> From Drive reports</span>';
 
   let answerHtml=(parsed.answer||'').replace(/\n/g,'<br>');
@@ -2034,7 +2056,7 @@ function renderQAResult(turnId,parsed,origin,q){
     ${originTag}
     <div>${answerHtml}</div>
     ${tableHtml}
-    ${chartId?`<div class="qa-chart-wrap"><canvas id="${chartId}"></canvas></div>`:''}
+    ${chartId?`<div class="qa-chart-wrap"><div style="display:flex;justify-content:flex-end;margin-bottom:4px;"><button onclick="downloadQAChart('${chartId}')" style="font-size:10px;padding:3px 9px;border-radius:6px;border:1px solid var(--b1);background:var(--bg);color:var(--t2);cursor:pointer;font-family:inherit;"><i class="ti ti-download"></i> PNG</button></div><canvas id="${chartId}"></canvas></div>`:''}
     ${summaryHtml}
     ${sourceNote}
   </div>`;
@@ -2425,6 +2447,13 @@ function doSync(){
   if(!tok){initiateAuth();return;}
   if(syncInProgress)return;
   syncInProgress=true;setSyncButtonsDisabled(true);
+  // Save current datasets as prev quarter snapshot before re-parsing
+  if(Object.keys(datasets.wfe).length||Object.keys(datasets.revenue).length){
+    prevDatasets={wfe:JSON.parse(JSON.stringify(datasets.wfe)),capex:JSON.parse(JSON.stringify(datasets.capex)),revenue:JSON.parse(JSON.stringify(datasets.revenue))};
+    const prevDate=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    try{localStorage.setItem('nova_prev_datasets',JSON.stringify(prevDatasets));localStorage.setItem('nova_prev_date',prevDate);}catch{}
+    updatePrevDateLabel();
+  }
   // Incremental: keep existing parse cache, only re-parse files with new modifiedTime
   parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};capexByAnalyst={};
   loadFiles(false).finally(()=>{syncInProgress=false;setSyncButtonsDisabled(false);});
@@ -2433,15 +2462,21 @@ function doFullSync(){
   if(!tok){initiateAuth();return;}
   if(syncInProgress)return;
   syncInProgress=true;setSyncButtonsDisabled(true);
-  // Save current datasets as "previous quarter" before clearing
-  if(Object.keys(datasets.wfe).length){
+  // Save current datasets as prev quarter snapshot before clearing
+  if(Object.keys(datasets.wfe).length||Object.keys(datasets.revenue).length){
     prevDatasets={wfe:JSON.parse(JSON.stringify(datasets.wfe)),capex:JSON.parse(JSON.stringify(datasets.capex)),revenue:JSON.parse(JSON.stringify(datasets.revenue))};
-    try{localStorage.setItem('nova_prev_datasets',JSON.stringify(prevDatasets));}catch{}
+    const prevDate=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    try{localStorage.setItem('nova_prev_datasets',JSON.stringify(prevDatasets));localStorage.setItem('nova_prev_date',prevDate);}catch{}
+    updatePrevDateLabel();
   }
   // Full refresh: clears parse cache
   try{localStorage.removeItem('nova_parse_cache_v3');}catch{}
   parseLog=[];datasets={wfe:{},capex:{},revenue:{},pc:{}};pcData={ti:{},gartner:{}};capexByAnalyst={};
   loadFiles(true).finally(()=>{syncInProgress=false;setSyncButtonsDisabled(false);});
+}
+function updatePrevDateLabel(){
+  const d=localStorage.getItem('nova_prev_date');
+  document.querySelectorAll('.prev-date-lbl').forEach(el=>{el.textContent=d?`vs. snapshot ${d}`:'vs. prior snapshot';});
 }
 /* ══════════════════════════════════════════════
    MARKET SIGNALS — EDGAR + Claude API
